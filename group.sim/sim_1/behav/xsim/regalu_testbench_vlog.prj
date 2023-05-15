@@ -1,9 +1,12 @@
 # compile verilog/system verilog design source files
 verilog xil_defaultlib  \
+"../../../../group.srcs/sources_1/new/32regnegative.v" \
 "../../../../group.srcs/sources_1/new/ALUpipe.v" \
 "../../../../../alu32.v" \
 "../../../../group.srcs/sources_1/new/reg32.v" \
-"../../../../alupipe_testbench.v" \
+"../../../../group.srcs/sources_1/new/regalu.v" \
+"../../../../group.srcs/sources_1/new/regfile32x32.v" \
+"../../../../regalu_testbench.v" \
 
 # compile glbl module
 verilog xil_defaultlib "glbl.v"

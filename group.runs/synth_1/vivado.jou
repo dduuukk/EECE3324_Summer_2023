@@ -2,12 +2,12 @@
 # Vivado v2022.1 (64-bit)
 # SW Build 3526262 on Mon Apr 18 15:48:16 MDT 2022
 # IP Build 3524634 on Mon Apr 18 20:55:01 MDT 2022
-# Start of session at: Thu May 11 12:47:27 2023
-# Process ID: 23444
+# Start of session at: Sat May 13 19:34:45 2023
+# Process ID: 22268
 # Current directory: C:/Users/jrper/OneDrive/Documents/EECE3324/group/group.runs/synth_1
-# Command line: vivado.exe -log ALUpipe.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source ALUpipe.tcl
-# Log file: C:/Users/jrper/OneDrive/Documents/EECE3324/group/group.runs/synth_1/ALUpipe.vds
+# Command line: vivado.exe -log alupipe.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source alupipe.tcl
+# Log file: C:/Users/jrper/OneDrive/Documents/EECE3324/group/group.runs/synth_1/alupipe.vds
 # Journal file: C:/Users/jrper/OneDrive/Documents/EECE3324/group/group.runs/synth_1\vivado.jou
 # Running On: DESKTOP-EHEHFCB, OS: Windows, CPU Frequency: 2592 MHz, CPU Physical cores: 6, Host memory: 34073 MB
 #-----------------------------------------------------------
-source ALUpipe.tcl -notrace
+source alupipe.tcl -notrace

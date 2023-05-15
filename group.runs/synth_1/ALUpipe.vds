@@ -2,82 +2,53 @@
 # Vivado v2022.1 (64-bit)
 # SW Build 3526262 on Mon Apr 18 15:48:16 MDT 2022
 # IP Build 3524634 on Mon Apr 18 20:55:01 MDT 2022
-# Start of session at: Thu May 11 12:47:27 2023
-# Process ID: 23444
+# Start of session at: Sat May 13 19:34:45 2023
+# Process ID: 22268
 # Current directory: C:/Users/jrper/OneDrive/Documents/EECE3324/group/group.runs/synth_1
-# Command line: vivado.exe -log ALUpipe.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source ALUpipe.tcl
-# Log file: C:/Users/jrper/OneDrive/Documents/EECE3324/group/group.runs/synth_1/ALUpipe.vds
+# Command line: vivado.exe -log alupipe.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source alupipe.tcl
+# Log file: C:/Users/jrper/OneDrive/Documents/EECE3324/group/group.runs/synth_1/alupipe.vds
 # Journal file: C:/Users/jrper/OneDrive/Documents/EECE3324/group/group.runs/synth_1\vivado.jou
 # Running On: DESKTOP-EHEHFCB, OS: Windows, CPU Frequency: 2592 MHz, CPU Physical cores: 6, Host memory: 34073 MB
 #-----------------------------------------------------------
-source ALUpipe.tcl -notrace
-Command: synth_design -top ALUpipe -part xck26-sfvc784-2LV-c
+source alupipe.tcl -notrace
+Command: read_checkpoint -auto_incremental -incremental C:/Users/jrper/OneDrive/Documents/EECE3324/group/group.srcs/utils_1/imports/synth_1/ALUpipe.dcp
+INFO: [Vivado 12-5825] Read reference checkpoint from C:/Users/jrper/OneDrive/Documents/EECE3324/group/group.srcs/utils_1/imports/synth_1/ALUpipe.dcp for incremental synthesis
+INFO: [Vivado 12-7989] Please ensure there are no constraint changes
+Command: synth_design -top alupipe -part xck26-sfvc784-2LV-c
 Starting synth_design
 Attempting to get a license for feature 'Synthesis' and/or device 'xck26'
 INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xck26'
+INFO: [Designutils 20-5440] No compile time benefit to using incremental synthesis; A full resynthesis will be run
+INFO: [Designutils 20-4379] Flow is switching to default flow due to incremental criteria not met. If you would like to alter this behaviour and have the flow terminate instead, please set the following parameter config_implementation {autoIncr.Synth.RejectBehavior Terminate}
 INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 2 processes.
 INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
-INFO: [Synth 8-7075] Helper process launched with PID 2404
+INFO: [Synth 8-7075] Helper process launched with PID 24304
 ---------------------------------------------------------------------------------
-Starting Synthesize : Time (s): cpu = 00:00:06 ; elapsed = 00:00:06 . Memory (MB): peak = 1269.211 ; gain = 0.000
+Starting Synthesize : Time (s): cpu = 00:00:06 ; elapsed = 00:00:06 . Memory (MB): peak = 1276.457 ; gain = 0.000
 ---------------------------------------------------------------------------------
-INFO: [Synth 8-6157] synthesizing module 'ALUpipe' [C:/Users/jrper/OneDrive/Documents/EECE3324/group/group.srcs/sources_1/new/ALUpipe.v:23]
+INFO: [Synth 8-6157] synthesizing module 'alupipe' [C:/Users/jrper/OneDrive/Documents/EECE3324/group/group.srcs/sources_1/new/ALUpipe.v:3]
 INFO: [Synth 8-6157] synthesizing module 'reg32' [C:/Users/jrper/OneDrive/Documents/EECE3324/group/group.srcs/sources_1/new/reg32.v:3]
 INFO: [Synth 8-6155] done synthesizing module 'reg32' (0#1) [C:/Users/jrper/OneDrive/Documents/EECE3324/group/group.srcs/sources_1/new/reg32.v:3]
 INFO: [Synth 8-6157] synthesizing module 'alu32' [C:/Users/jrper/OneDrive/Documents/EECE3324/alu32.v:3]
 INFO: [Synth 8-6157] synthesizing module 'alu_cell' [C:/Users/jrper/OneDrive/Documents/EECE3324/alu32.v:41]
-INFO: [Synth 8-155] case statement is not full and has no default [C:/Users/jrper/OneDrive/Documents/EECE3324/alu32.v:55]
 INFO: [Synth 8-6155] done synthesizing module 'alu_cell' (0#1) [C:/Users/jrper/OneDrive/Documents/EECE3324/alu32.v:41]
-INFO: [Synth 8-6157] synthesizing module 'lac5' [C:/Users/jrper/OneDrive/Documents/EECE3324/alu32.v:201]
-INFO: [Synth 8-6157] synthesizing module 'lac4' [C:/Users/jrper/OneDrive/Documents/EECE3324/alu32.v:164]
-INFO: [Synth 8-6157] synthesizing module 'lac3' [C:/Users/jrper/OneDrive/Documents/EECE3324/alu32.v:127]
-INFO: [Synth 8-6157] synthesizing module 'lac2' [C:/Users/jrper/OneDrive/Documents/EECE3324/alu32.v:88]
-INFO: [Synth 8-6157] synthesizing module 'lac' [C:/Users/jrper/OneDrive/Documents/EECE3324/alu32.v:75]
-INFO: [Synth 8-6155] done synthesizing module 'lac' (0#1) [C:/Users/jrper/OneDrive/Documents/EECE3324/alu32.v:75]
-INFO: [Synth 8-6155] done synthesizing module 'lac2' (0#1) [C:/Users/jrper/OneDrive/Documents/EECE3324/alu32.v:88]
-INFO: [Synth 8-6155] done synthesizing module 'lac3' (0#1) [C:/Users/jrper/OneDrive/Documents/EECE3324/alu32.v:127]
-INFO: [Synth 8-6155] done synthesizing module 'lac4' (0#1) [C:/Users/jrper/OneDrive/Documents/EECE3324/alu32.v:164]
-INFO: [Synth 8-6155] done synthesizing module 'lac5' (0#1) [C:/Users/jrper/OneDrive/Documents/EECE3324/alu32.v:201]
+INFO: [Synth 8-6157] synthesizing module 'lac5' [C:/Users/jrper/OneDrive/Documents/EECE3324/alu32.v:199]
+INFO: [Synth 8-6157] synthesizing module 'lac4' [C:/Users/jrper/OneDrive/Documents/EECE3324/alu32.v:162]
+INFO: [Synth 8-6157] synthesizing module 'lac3' [C:/Users/jrper/OneDrive/Documents/EECE3324/alu32.v:125]
+INFO: [Synth 8-6157] synthesizing module 'lac2' [C:/Users/jrper/OneDrive/Documents/EECE3324/alu32.v:86]
+INFO: [Synth 8-6157] synthesizing module 'lac' [C:/Users/jrper/OneDrive/Documents/EECE3324/alu32.v:72]
+INFO: [Synth 8-6155] done synthesizing module 'lac' (0#1) [C:/Users/jrper/OneDrive/Documents/EECE3324/alu32.v:72]
+INFO: [Synth 8-6155] done synthesizing module 'lac2' (0#1) [C:/Users/jrper/OneDrive/Documents/EECE3324/alu32.v:86]
+INFO: [Synth 8-6155] done synthesizing module 'lac3' (0#1) [C:/Users/jrper/OneDrive/Documents/EECE3324/alu32.v:125]
+INFO: [Synth 8-6155] done synthesizing module 'lac4' (0#1) [C:/Users/jrper/OneDrive/Documents/EECE3324/alu32.v:162]
+INFO: [Synth 8-6155] done synthesizing module 'lac5' (0#1) [C:/Users/jrper/OneDrive/Documents/EECE3324/alu32.v:199]
 INFO: [Synth 8-6155] done synthesizing module 'alu32' (0#1) [C:/Users/jrper/OneDrive/Documents/EECE3324/alu32.v:3]
-INFO: [Synth 8-6155] done synthesizing module 'ALUpipe' (0#1) [C:/Users/jrper/OneDrive/Documents/EECE3324/group/group.srcs/sources_1/new/ALUpipe.v:23]
-WARNING: [Synth 8-3848] Net dbus in module/entity ALUpipe does not have driver. [C:/Users/jrper/OneDrive/Documents/EECE3324/group/group.srcs/sources_1/new/ALUpipe.v:29]
-WARNING: [Synth 8-7129] Port dbus[31] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[30] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[29] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[28] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[27] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[26] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[25] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[24] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[23] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[22] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[21] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[20] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[19] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[18] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[17] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[16] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[15] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[14] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[13] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[12] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[11] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[10] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[9] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[8] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[7] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[6] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[5] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[4] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[3] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[2] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[1] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[0] in module ALUpipe is either unconnected or has no load
+INFO: [Synth 8-6155] done synthesizing module 'alupipe' (0#1) [C:/Users/jrper/OneDrive/Documents/EECE3324/group/group.srcs/sources_1/new/ALUpipe.v:3]
 ---------------------------------------------------------------------------------
-Finished Synthesize : Time (s): cpu = 00:00:07 ; elapsed = 00:00:08 . Memory (MB): peak = 1269.211 ; gain = 0.000
+Finished Synthesize : Time (s): cpu = 00:00:07 ; elapsed = 00:00:08 . Memory (MB): peak = 1276.457 ; gain = 0.000
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished Constraint Validation : Time (s): cpu = 00:00:08 ; elapsed = 00:00:08 . Memory (MB): peak = 1269.211 ; gain = 0.000
+Finished Constraint Validation : Time (s): cpu = 00:00:08 ; elapsed = 00:00:09 . Memory (MB): peak = 1276.457 ; gain = 0.000
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Loading Part and Timing Information
@@ -85,12 +56,11 @@ Start Loading Part and Timing Information
 Loading part: xck26-sfvc784-2LV-c
 INFO: [Synth 8-6742] Reading net delay rules and data
 ---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:08 ; elapsed = 00:00:09 . Memory (MB): peak = 1276.457 ; gain = 0.000
+---------------------------------------------------------------------------------
 INFO: [Device 21-403] Loading part xck26-sfvc784-2LV-c
-Finished Loading Part and Timing Information : Time (s): cpu = 00:00:08 ; elapsed = 00:00:08 . Memory (MB): peak = 1269.211 ; gain = 0.000
 ---------------------------------------------------------------------------------
-WARNING: [Synth 8-327] inferring latch for variable 'd_reg' [C:/Users/jrper/OneDrive/Documents/EECE3324/alu32.v:57]
----------------------------------------------------------------------------------
-Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:08 ; elapsed = 00:00:09 . Memory (MB): peak = 1269.211 ; gain = 0.000
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:08 ; elapsed = 00:00:09 . Memory (MB): peak = 1276.457 ; gain = 0.000
 ---------------------------------------------------------------------------------
 No constraint files found.
 ---------------------------------------------------------------------------------
@@ -100,9 +70,7 @@ Detailed RTL Component Info :
 +---XORs : 
 	   2 Input      1 Bit         XORs := 97    
 +---Registers : 
-	               32 Bit    Registers := 2     
-+---Muxes : 
-	   5 Input    1 Bit        Muxes := 64    
+	               32 Bit    Registers := 3     
 ---------------------------------------------------------------------------------
 Finished RTL Component Statistics 
 ---------------------------------------------------------------------------------
@@ -121,85 +89,21 @@ No constraint files found.
 Start Cross Boundary and Area Optimization
 ---------------------------------------------------------------------------------
 WARNING: [Synth 8-7080] Parallel synthesis criteria is not met
-WARNING: [Synth 8-7129] Port dbus[31] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[30] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[29] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[28] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[27] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[26] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[25] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[24] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[23] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[22] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[21] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[20] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[19] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[18] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[17] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[16] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[15] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[14] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[13] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[12] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[11] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[10] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[9] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[8] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[7] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[6] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[5] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[4] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[3] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[2] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[1] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-7129] Port dbus[0] in module ALUpipe is either unconnected or has no load
-WARNING: [Synth 8-3332] Sequential element (alu/alucell[31]/d_reg) is unused and will be removed from module ALUpipe.
-WARNING: [Synth 8-3332] Sequential element (alu/alucell[30]/d_reg) is unused and will be removed from module ALUpipe.
-WARNING: [Synth 8-3332] Sequential element (alu/alucell[29]/d_reg) is unused and will be removed from module ALUpipe.
-WARNING: [Synth 8-3332] Sequential element (alu/alucell[28]/d_reg) is unused and will be removed from module ALUpipe.
-WARNING: [Synth 8-3332] Sequential element (alu/alucell[27]/d_reg) is unused and will be removed from module ALUpipe.
-WARNING: [Synth 8-3332] Sequential element (alu/alucell[26]/d_reg) is unused and will be removed from module ALUpipe.
-WARNING: [Synth 8-3332] Sequential element (alu/alucell[25]/d_reg) is unused and will be removed from module ALUpipe.
-WARNING: [Synth 8-3332] Sequential element (alu/alucell[24]/d_reg) is unused and will be removed from module ALUpipe.
-WARNING: [Synth 8-3332] Sequential element (alu/alucell[23]/d_reg) is unused and will be removed from module ALUpipe.
-WARNING: [Synth 8-3332] Sequential element (alu/alucell[22]/d_reg) is unused and will be removed from module ALUpipe.
-WARNING: [Synth 8-3332] Sequential element (alu/alucell[21]/d_reg) is unused and will be removed from module ALUpipe.
-WARNING: [Synth 8-3332] Sequential element (alu/alucell[20]/d_reg) is unused and will be removed from module ALUpipe.
-WARNING: [Synth 8-3332] Sequential element (alu/alucell[19]/d_reg) is unused and will be removed from module ALUpipe.
-WARNING: [Synth 8-3332] Sequential element (alu/alucell[18]/d_reg) is unused and will be removed from module ALUpipe.
-WARNING: [Synth 8-3332] Sequential element (alu/alucell[17]/d_reg) is unused and will be removed from module ALUpipe.
-WARNING: [Synth 8-3332] Sequential element (alu/alucell[16]/d_reg) is unused and will be removed from module ALUpipe.
-WARNING: [Synth 8-3332] Sequential element (alu/alucell[15]/d_reg) is unused and will be removed from module ALUpipe.
-WARNING: [Synth 8-3332] Sequential element (alu/alucell[14]/d_reg) is unused and will be removed from module ALUpipe.
-WARNING: [Synth 8-3332] Sequential element (alu/alucell[13]/d_reg) is unused and will be removed from module ALUpipe.
-WARNING: [Synth 8-3332] Sequential element (alu/alucell[12]/d_reg) is unused and will be removed from module ALUpipe.
-WARNING: [Synth 8-3332] Sequential element (alu/alucell[11]/d_reg) is unused and will be removed from module ALUpipe.
-WARNING: [Synth 8-3332] Sequential element (alu/alucell[10]/d_reg) is unused and will be removed from module ALUpipe.
-WARNING: [Synth 8-3332] Sequential element (alu/alucell[9]/d_reg) is unused and will be removed from module ALUpipe.
-WARNING: [Synth 8-3332] Sequential element (alu/alucell[8]/d_reg) is unused and will be removed from module ALUpipe.
-WARNING: [Synth 8-3332] Sequential element (alu/alucell[7]/d_reg) is unused and will be removed from module ALUpipe.
-WARNING: [Synth 8-3332] Sequential element (alu/alucell[6]/d_reg) is unused and will be removed from module ALUpipe.
-WARNING: [Synth 8-3332] Sequential element (alu/alucell[5]/d_reg) is unused and will be removed from module ALUpipe.
-WARNING: [Synth 8-3332] Sequential element (alu/alucell[4]/d_reg) is unused and will be removed from module ALUpipe.
-WARNING: [Synth 8-3332] Sequential element (alu/alucell[3]/d_reg) is unused and will be removed from module ALUpipe.
-WARNING: [Synth 8-3332] Sequential element (alu/alucell[2]/d_reg) is unused and will be removed from module ALUpipe.
-WARNING: [Synth 8-3332] Sequential element (alu/alucell[1]/d_reg) is unused and will be removed from module ALUpipe.
-WARNING: [Synth 8-3332] Sequential element (alu/alucell[0]/d_reg) is unused and will be removed from module ALUpipe.
 ---------------------------------------------------------------------------------
-Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:00:16 ; elapsed = 00:00:25 . Memory (MB): peak = 1661.457 ; gain = 392.246
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:00:18 ; elapsed = 00:00:21 . Memory (MB): peak = 1664.965 ; gain = 388.508
 ---------------------------------------------------------------------------------
 No constraint files found.
 ---------------------------------------------------------------------------------
 Start Timing Optimization
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished Timing Optimization : Time (s): cpu = 00:00:16 ; elapsed = 00:00:25 . Memory (MB): peak = 1661.457 ; gain = 392.246
+Finished Timing Optimization : Time (s): cpu = 00:00:18 ; elapsed = 00:00:21 . Memory (MB): peak = 1664.965 ; gain = 388.508
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Technology Mapping
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished Technology Mapping : Time (s): cpu = 00:00:16 ; elapsed = 00:00:25 . Memory (MB): peak = 1661.457 ; gain = 392.246
+Finished Technology Mapping : Time (s): cpu = 00:00:18 ; elapsed = 00:00:21 . Memory (MB): peak = 1664.965 ; gain = 388.508
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start IO Insertion
@@ -217,37 +121,37 @@ Start Final Netlist Cleanup
 Finished Final Netlist Cleanup
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished IO Insertion : Time (s): cpu = 00:00:21 ; elapsed = 00:00:29 . Memory (MB): peak = 1661.457 ; gain = 392.246
+Finished IO Insertion : Time (s): cpu = 00:00:23 ; elapsed = 00:00:25 . Memory (MB): peak = 1664.965 ; gain = 388.508
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Renaming Generated Instances
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished Renaming Generated Instances : Time (s): cpu = 00:00:21 ; elapsed = 00:00:29 . Memory (MB): peak = 1661.457 ; gain = 392.246
+Finished Renaming Generated Instances : Time (s): cpu = 00:00:23 ; elapsed = 00:00:25 . Memory (MB): peak = 1664.965 ; gain = 388.508
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Rebuilding User Hierarchy
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished Rebuilding User Hierarchy : Time (s): cpu = 00:00:21 ; elapsed = 00:00:29 . Memory (MB): peak = 1661.457 ; gain = 392.246
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:00:23 ; elapsed = 00:00:25 . Memory (MB): peak = 1664.965 ; gain = 388.508
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Renaming Generated Ports
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished Renaming Generated Ports : Time (s): cpu = 00:00:21 ; elapsed = 00:00:29 . Memory (MB): peak = 1661.457 ; gain = 392.246
+Finished Renaming Generated Ports : Time (s): cpu = 00:00:23 ; elapsed = 00:00:25 . Memory (MB): peak = 1664.965 ; gain = 388.508
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Handling Custom Attributes
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished Handling Custom Attributes : Time (s): cpu = 00:00:21 ; elapsed = 00:00:29 . Memory (MB): peak = 1661.457 ; gain = 392.246
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:23 ; elapsed = 00:00:25 . Memory (MB): peak = 1664.965 ; gain = 388.508
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Renaming Generated Nets
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished Renaming Generated Nets : Time (s): cpu = 00:00:21 ; elapsed = 00:00:29 . Memory (MB): peak = 1661.457 ; gain = 392.246
+Finished Renaming Generated Nets : Time (s): cpu = 00:00:23 ; elapsed = 00:00:25 . Memory (MB): peak = 1664.965 ; gain = 388.508
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Writing Synthesis Report
@@ -260,37 +164,50 @@ Report BlackBoxes:
 +-+--------------+----------+
 
 Report Cell Usage: 
-+------+------+------+
-|      |Cell  |Count |
-+------+------+------+
-|1     |OBUFT |    32|
-+------+------+------+
++------+-----+------+
+|      |Cell |Count |
++------+-----+------+
+|1     |LUT2 |     2|
+|2     |LUT3 |     7|
+|3     |LUT4 |     5|
+|4     |LUT5 |     5|
+|5     |LUT6 |    97|
+|6     |FDRE |    96|
+|7     |IBUF |    69|
+|8     |OBUF |    32|
++------+-----+------+
 
 Report Instance Areas: 
-+------+---------+-------+------+
-|      |Instance |Module |Cells |
-+------+---------+-------+------+
-|1     |top      |       |    32|
-+------+---------+-------+------+
++------+---------+--------+------+
+|      |Instance |Module  |Cells |
++------+---------+--------+------+
+|1     |top      |        |   313|
+|2     |  A      |reg32   |   141|
+|3     |  B      |reg32_0 |    38|
+|4     |  D      |reg32_1 |    33|
++------+---------+--------+------+
 ---------------------------------------------------------------------------------
-Finished Writing Synthesis Report : Time (s): cpu = 00:00:21 ; elapsed = 00:00:29 . Memory (MB): peak = 1661.457 ; gain = 392.246
+Finished Writing Synthesis Report : Time (s): cpu = 00:00:23 ; elapsed = 00:00:25 . Memory (MB): peak = 1664.965 ; gain = 388.508
 ---------------------------------------------------------------------------------
-Synthesis finished with 0 errors, 0 critical warnings and 100 warnings.
-Synthesis Optimization Runtime : Time (s): cpu = 00:00:21 ; elapsed = 00:00:29 . Memory (MB): peak = 1661.457 ; gain = 392.246
-Synthesis Optimization Complete : Time (s): cpu = 00:00:21 ; elapsed = 00:00:29 . Memory (MB): peak = 1661.457 ; gain = 392.246
+Synthesis finished with 0 errors, 0 critical warnings and 2 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:00:23 ; elapsed = 00:00:25 . Memory (MB): peak = 1664.965 ; gain = 388.508
+Synthesis Optimization Complete : Time (s): cpu = 00:00:23 ; elapsed = 00:00:25 . Memory (MB): peak = 1664.965 ; gain = 388.508
 INFO: [Project 1-571] Translating synthesized netlist
-Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.001 . Memory (MB): peak = 1661.457 ; gain = 0.000
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.004 . Memory (MB): peak = 1664.965 ; gain = 0.000
+INFO: [Netlist 29-17] Analyzing 69 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
 INFO: [Project 1-570] Preparing netlist for logic optimization
 INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
-Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.001 . Memory (MB): peak = 1680.301 ; gain = 0.000
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 1697.438 ; gain = 0.000
 INFO: [Project 1-111] Unisim Transformation Summary:
-No Unisim elements were transformed.
+  A total of 69 instances were transformed.
+  IBUF => IBUF (IBUFCTRL, INBUF): 69 instances
 
-Synth Design complete, checksum: 7a09ab6c
+Synth Design complete, checksum: 176c634f
 INFO: [Common 17-83] Releasing license: Synthesis
-30 Infos, 100 Warnings, 0 Critical Warnings and 0 Errors encountered.
+35 Infos, 2 Warnings, 0 Critical Warnings and 0 Errors encountered.
 synth_design completed successfully
-synth_design: Time (s): cpu = 00:00:22 ; elapsed = 00:00:31 . Memory (MB): peak = 1680.301 ; gain = 411.090
-INFO: [Common 17-1381] The checkpoint 'C:/Users/jrper/OneDrive/Documents/EECE3324/group/group.runs/synth_1/ALUpipe.dcp' has been generated.
-INFO: [runtcl-4] Executing : report_utilization -file ALUpipe_utilization_synth.rpt -pb ALUpipe_utilization_synth.pb
-INFO: [Common 17-206] Exiting Vivado at Thu May 11 12:48:08 2023...
+synth_design: Time (s): cpu = 00:00:24 ; elapsed = 00:00:27 . Memory (MB): peak = 1697.438 ; gain = 420.980
+INFO: [Common 17-1381] The checkpoint 'C:/Users/jrper/OneDrive/Documents/EECE3324/group/group.runs/synth_1/alupipe.dcp' has been generated.
+INFO: [runtcl-4] Executing : report_utilization -file alupipe_utilization_synth.rpt -pb alupipe_utilization_synth.pb
+INFO: [Common 17-206] Exiting Vivado at Sat May 13 19:35:20 2023...
