@@ -1,3 +1,4 @@
+//Christian Bender and Joe Perkins
 `timescale 1ns / 1ps
 
 module regalu(
