@@ -23,11 +23,11 @@
 module decodeopcode(
     input [5:0] code,
     input [5:0] funct,
-    output Imm,
-    input [2:0] S,
-    input Cin
+    output reg Imm,
+    output reg [2:0] S,
+    output reg Cin
     );
-    always @(code, funct) begin
+    always @(code, funct, S, Imm, Cin) begin
         case(code)
             6'b000011:
             begin
@@ -92,6 +92,8 @@ module decodeopcode(
                         Imm = 1'b0;
                         Cin = 1'b0;
                     end
-            end    
+                 endcase
+            end
+        endcase    
     end
 endmodule

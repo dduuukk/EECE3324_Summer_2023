@@ -25,7 +25,7 @@ module decode5to32(
     output reg [31:0] out
     );
     
-    always @(code) begin
+    always @(code, out) begin
         out = 32'b1 << code;
         end
 endmodule
