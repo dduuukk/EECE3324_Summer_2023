@@ -92,8 +92,20 @@ module decodeopcode(
                         Imm = 1'b0;
                         Cin = 1'b0;
                     end
+                    default:
+                    begin
+                        S = 3'b000;
+                        Imm = 1'b0;
+                        Cin = 1'b0;
+                    end
                  endcase
             end
+            default:
+                begin
+                S = 3'b000;
+                Imm = 1'b0;
+                Cin = 1'b0;
+                end
         endcase    
     end
 endmodule

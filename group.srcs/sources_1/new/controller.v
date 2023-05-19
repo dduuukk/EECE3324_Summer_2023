@@ -66,9 +66,9 @@ module controller(
     );
     
     reg32 IDEXD(.d(MUXtoIDEX), .q(IDEXtoEXMEM), .clk(clk));
-    reg32 IDEXImm(.d(decodeImm), .q(Imm), .clk(clk));
-    reg32 IDEXS(.d(decodeS), .q(S), .clk(clk));
-    reg32 IDEXCin(.d(decodeCin), .q(Cin), .clk(clk));
+    reg1 IDEXImm(.d(decodeImm), .q(Imm), .clk(clk));
+    reg3 IDEXS(.d(decodeS), .q(S), .clk(clk));
+    reg1 IDEXCin(.d(decodeCin), .q(Cin), .clk(clk));
     
     reg32 EXMEMD(.d(IDEXtoEXMEM), .q(Dselect), .clk(clk));
 
