@@ -14,8 +14,8 @@ module reg32negative(
     reg [31:0] q;
     wire newclk;
     assign newclk = dselect & clk;
-    always@(negedge newclk)
-        q = d;
+    always@(negedge clk)
+        if (dselect==1'b1) q = d;
     
     assign abus = aselect ? q : 32'bz;
     assign bbus = bselect ? q : 32'bz;

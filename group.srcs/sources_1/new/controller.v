@@ -26,12 +26,13 @@ module controller(
     output [31:0] Aselect,
     output [31:0] Bselect,
     output [31:0] Dselect,
+    output [31:0] immValue,
     output Cin,
     output [2:0] S,
     output Imm    
     );
     
-    wire [31:0] iregtodecoders, rdtomux, MUXtoIDEX, IDEXtoEXMEM;
+    wire [31:0] iregtodecoders, rdtomux, MUXtoIDEX, IDEXtoEXMEM,IMMtoIDEX;
     wire decodeImm, decodeCin;
     wire [2:0] decodeS;
     
@@ -49,13 +50,16 @@ module controller(
         .code(iregtodecoders[15:11]),
         .out(rdtomux)    
     );
-    
     decodeopcode opdecode(
         .code(iregtodecoders[31:26]),
         .funct(iregtodecoders[5:0]),
         .Imm(decodeImm),
         .S(decodeS),
         .Cin(decodeCin)
+    );
+    signextend SignExtend(
+        .in(iregtodecoders[15:0]),
+        .extend(IMMtoIDEX)
     );
     
     mux2to1 decodeMux(
@@ -66,6 +70,7 @@ module controller(
     );
     
     reg32 IDEXD(.d(MUXtoIDEX), .q(IDEXtoEXMEM), .clk(clk));
+    reg32 IDEXDImm(.d(IMMtoIDEX), .q(immValue), .clk(clk));
     reg1 IDEXImm(.d(decodeImm), .q(Imm), .clk(clk));
     reg3 IDEXS(.d(decodeS), .q(S), .clk(clk));
     reg1 IDEXCin(.d(decodeCin), .q(Cin), .clk(clk));
