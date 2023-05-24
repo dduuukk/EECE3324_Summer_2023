@@ -49,7 +49,6 @@ neg = 3'bxxx;
 // ----------
 // 1. Begin test clear XOR R1, R0, R0
 // ----------
-
 //         opcode   source1   source2   dest      shift     Function...
 ibustm[0]={Rformat, 5'b00000, 5'b00000, 5'b00001, 5'b00000, XOR};
 ibustm[1]={Rformat, 5'b00000, 5'b00000, 5'b00001, 5'b00000, XOR};
@@ -61,10 +60,10 @@ Ref_Imm[1] =1'bx;
 Ref_Cin[1] =1'bx;
 Ref_S[1] = 3'bxxx;
 
+
 // ----------
 //  2. ADDI R2, R0, #000F
 // ----------
-
 //        opcode source1   dest      Immediate...
 ibustm[2]={ADDI, 5'b00000, 5'b00010, 16'h000F};
 
@@ -107,7 +106,6 @@ Ref_S[4] = SAND; //input3
 // ---------- 
 // 5. AND R5, R1, R2
 // ----------
-
 //         opcode   source1   source2   dest      shift     Function...
 ibustm[5]={Rformat, 5'b00001, 5'b00010, 5'b00101, 5'b00000, AND};
 
@@ -118,9 +116,10 @@ Ref_Imm[5] =1'b0;  //input4
 Ref_Cin[5] =1'b1;  //input4
 Ref_S[5] = SSUB; //input4
 
-// ---------- // 6. XORI R6, R0, #FF00
-// ----------
 
+// ---------- 
+// 6. XORI R6, R0, #FF00
+// ----------
 //        opcode source1   dest      Immediate...
 ibustm[6]={XORI, 5'b00000, 5'b00110, 16'hFF00};
 
@@ -135,7 +134,6 @@ Ref_S[6] = SAND; //input5
 // ---------- 
 // 7. ORI R7, R1, #0FF0
 // ----------
-
 //        opcode source1   dest      Immediate...
 ibustm[7]={ANDI, 5'b00001, 5'b00111, 16'h0FF0};
 
@@ -150,7 +148,6 @@ Ref_S[7] = SXOR; //input6
 // ---------- 
 // 8. OR R1, R3, R2
 // ----------
-
 //         opcode   source1   source2   dest      shift     Function...
 ibustm[8]={Rformat, 5'b00011, 5'b00010, 5'b00001, 5'b00000, OR};
 
@@ -165,7 +162,6 @@ Ref_S[8] = SAND; //input7
 // ---------- 
 // 9. SUBI R8, R3, #0001
 // ----------
-
 //        opcode source1   dest      Immediate...
 ibustm[9]={SUBI, 5'b00011, 5'b01000, 16'h0001};
 
@@ -180,7 +176,6 @@ Ref_S[9] = SOR; //input8
 // ---------- 
 // 10. XOR R9, R5, R2
 // ----------
-
 //         opcode   source1   source2   dest      shift     Function...
 ibustm[10]={Rformat, 5'b00101, 5'b00010, 5'b01001, 5'b00000, XOR};
 
@@ -195,9 +190,8 @@ Ref_S[10] = SSUB; //input9
 // ------------ 
 // 11. XORI R10, R3, #FFFF  
 // ------------
-
 //        opcode source1   dest      Immediate...
-ibustm[11]={ORI, 5'b00011, 5'b01010, 16'hFFFF};
+ibustm[11]={XORI, 5'b00011, 5'b01010, 16'hFFFF};
 Ref_Aselect[11] = 32'b00000000000000000000000000001000;//input11
 Ref_Bselect[11] = 32'bxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;//input11
 Ref_Dselect[11] = 32'b0000000000000000000000100000000;//input9
@@ -205,10 +199,10 @@ Ref_Imm[11] =1'b0;  //input10
 Ref_Cin[11] =1'b0;  //input10
 Ref_S[11] = SXOR; //input10
 
+
 // ------------ 
 // 12. XORI R11, R3, #FFFF
 // ------------
-
 //         opcode source1   dest      Immediate...
 ibustm[12]={ANDI, 5'b00011, 5'b01011, 16'hFFFF};
 
@@ -217,13 +211,12 @@ Ref_Bselect[12] = 32'bxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx; //input12
 Ref_Dselect[12] = 32'b0000000000000000000001000000000; //input10
 Ref_Imm[12] =1'b1;  //input11
 Ref_Cin[12] =1'b0;  //input11
-Ref_S[12] = SOR; //input11
+Ref_S[12] = SXOR; //input11
 
 
 // --------- 
 // 13. OR R12, R5, R6
 // ---------
-
 //          opcode   source1   source2   dest      shift     Function...
 ibustm[13]={Rformat, 5'b00101, 5'b00110, 5'b01100, 5'b00000, OR};
 
@@ -238,7 +231,6 @@ Ref_S[13] = SAND; //input12
 // --------- 
 // 14. SUB R13, R3, R0
 // ---------
-
 //          opcode   source1   source2   dest      shift     Function...
 ibustm[14]={Rformat, 5'b00011, 5'b00000, 5'b01101, 5'b00000, SUB};
 
@@ -253,7 +245,6 @@ Ref_S[14] = SOR; //input13
 // --------- 
 // 15. ANDI R14, R4, #0FF0
 // ---------
-
 //         opcode source1   dest      Immediate...
 ibustm[15]={ANDI, 5'b00100, 5'b01110, 16'h0FF0};
 
@@ -278,8 +269,210 @@ Ref_Imm[16] =1'b1;  //input15
 Ref_Cin[16] =1'b0;  //input15
 Ref_S[16] = SAND; //input15
 
+  // ----------
+  //  17. SUBI R1, R0, #00C8
+  // ----------
+  //        opcode source1   dest      Immediate...
+  ibustm[17]={SUBI, 5'b00000, 5'b00001, 16'h00C8};
 
-ntests = 16;
+  Ref_Aselect[17] = 32'b00000000000000000000000000000001; //input17 (R0)
+  Ref_Bselect[17] = 32'bxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx; //input17 (IMM)
+  Ref_Dselect[17] = 32'b00000000000000000100000000000000; //input15 (R14)
+  Ref_Imm[17] =1'b1;  //input16 
+  Ref_Cin[17] =1'b0;  //input16 
+  Ref_S[17] = SXOR; //input16 
+
+
+  // ---------- 
+  // 18. ADDI R10, R5, #FF38
+  // ----------
+  //        opcode source1   dest      Immediate...
+  ibustm[18]={ADDI, 5'b00101, 5'b01010, 16'hFF38};
+
+  Ref_Aselect[18] = 32'b0000000000000000000000000100000; //input18 (R5)
+  Ref_Bselect[18] = 32'bxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx; //input18 (IMM)
+  Ref_Dselect[18] = 32'b0000000000000010000000000000000; //input16 (R16)
+  Ref_Imm[18] =1'b1;  //input17 
+  Ref_Cin[18] =1'b1;  //input17 
+  Ref_S[18] = SSUB; //input17 
+
+  
+  // ---------- 
+  // 19. SUBI R15, R1, #1388
+  // ----------
+  //        opcode source1   dest      Immediate...
+  ibustm[19]={SUBI, 5'b00001, 5'b01111, 16'h1388};
+
+  Ref_Aselect[19] = 32'b00000000000000000000000000000010; //input19 (R1)
+  Ref_Bselect[19] = 32'bxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx; //input19 (IMM)
+  Ref_Dselect[19] = 32'b00000000000000000000000000000010; //input17 (R1)
+  Ref_Imm[19] =1'b1;  //input18 
+  Ref_Cin[19] =1'b0;  //input18 
+  Ref_S[19] = SADD; //input18 
+
+
+  // ---------- 
+  // 20. XOR R0, R1, R5
+  // ----------
+  //         opcode   source1   source2   dest      shift     Function...
+  ibustm[20]={Rformat, 5'b00001, 5'b00101, 5'b00000, 5'b00000, XOR};
+
+  Ref_Aselect[20] = 32'b0000000000000000000000000000010; //input20 (R1)
+  Ref_Bselect[20] = 32'b0000000000000000000000000100000; //input20 (R5)
+  Ref_Dselect[20] = 32'b0000000000000000000010000000000; //input18 (R10)
+  Ref_Imm[20] =1'b1;  //input19 
+  Ref_Cin[20] =1'b1;  //input19 
+  Ref_S[20] = SSUB; //input19 
+
+
+  // ---------- 
+  // 21. ANDI R7, R10, #80FFF
+  // ----------
+  //        opcode source1   dest      Immediate...
+  ibustm[21]={ANDI, 5'b01010, 5'b00111, 16'h0FFF};
+
+  Ref_Aselect[21] = 32'b00000000000000000000010000000000; //input21 (R10)
+  Ref_Bselect[21] = 32'bxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx; //input21 (IMM)
+  Ref_Dselect[21] = 32'b00000000000000001000000000000000; //input19 (R15) 
+  Ref_Imm[21] =1'b0;  //input20 
+  Ref_Cin[21] =1'b0;  //input20
+  Ref_S[21] = SXOR; //input20 
+
+
+  // ---------- 
+  // 22. ORI R27, R15, #F777 
+  // ----------
+  //        opcode source1   dest      Immediate...
+  ibustm[22]={ORI, 5'b01111, 5'b11011, 16'hF777}; 
+
+  Ref_Aselect[22] = 32'b00000000000000001000000000000000;//input22 (R15)
+  Ref_Bselect[22] = 32'bxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;//input22 (IMM)
+  Ref_Dselect[22] = 32'b00000000000000000000000000000001; //input20 (R0)
+  Ref_Imm[22] =1'b1; //input21 
+  Ref_Cin[22] =1'b0; //input21 
+  Ref_S[22] = SAND; //input21 
+
+
+  // ---------- 
+  // 23. ADD R19, R1, R0
+  // ----------
+  //         opcode   source1   source2   dest      shift     Function...
+  ibustm[23]={Rformat, 5'b00001, 5'b00000, 5'b10011, 5'b00000, ADD};
+
+  Ref_Aselect[23] = 32'b00000000000000000000000000000010; //input23 (R1)
+  Ref_Bselect[23] = 32'b00000000000000000000000000000001; //input23 (R0)
+  Ref_Dselect[23] = 32'b00000000000000000000000010000000; //input21 (R7)
+  Ref_Imm[23] =1'b1;  //input22 
+  Ref_Cin[23] =1'b0;  //input22 
+  Ref_S[23] = SOR; //input22 
+
+
+  // ---------- 
+  // 24. ORI R31, R27, #1914
+  // ----------
+  //        opcode source1   dest      Immediate...
+  ibustm[24]={ORI, 5'b11011, 5'b11111, 16'h1914}; 
+
+  Ref_Aselect[24] = 32'b00001000000000000000000000000000;//input24 (R27)
+  Ref_Bselect[24] = 32'bxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;//input24 (IMM)
+  Ref_Dselect[24] = 32'b00001000000000000000000000000000;//input22 (R27)
+  Ref_Imm[24] =1'b0;  //input23 
+  Ref_Cin[24] =1'b0;  //input23 
+  Ref_S[24] = SADD; //input23 
+
+
+// ---------- 
+// 25. AND R6, R27, R19
+// ----------
+//         opcode   source1   source2   dest      shift     Function...
+  ibustm[25]={Rformat, 5'b11011, 5'b10011, 5'b00110, 5'b00000, AND};
+
+  Ref_Aselect[25] = 32'b00001000000000000000000000000000; //input25 (R27)
+  Ref_Bselect[25] = 32'b00000000000010000000000000000000; //input25 (R19)
+  Ref_Dselect[25] = 32'b00000000000010000000000000000000; //input23 (R19)
+  Ref_Imm[25] =1'b1; //input24 
+  Ref_Cin[25] =1'b0; //input24 
+  Ref_S[25] = SOR; //input24 
+  
+// ---------- 
+// 26. ADDI R29, R31, #1B39
+// ----------
+//        opcode source1   dest      Immediate...
+ibustm[26]={ADDI, 5'b11111, 5'b11101, 16'h1B39}; // 
+
+Ref_Aselect[26] = 32'b10000000000000000000000000000000;//input26 (R31)
+Ref_Bselect[26] = 32'bxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;//input26 (IMM)
+Ref_Dselect[26] = 32'b10000000000000000000000000000000;//input24 (R31)
+Ref_Imm[26] =1'b0;  //input25
+Ref_Cin[26] =1'b0;  //input25
+Ref_S[26] = SAND; //input25
+
+  // ---------- 
+  // 27. ADD R22, R6, R19
+  // ----------
+  //         opcode   source1   source2   dest      shift     Function...
+  ibustm[27]={Rformat, 5'b00110, 5'b10011, 5'b10110, 5'b00000, ADD};
+
+  Ref_Aselect[27] = 32'b00000000000000000000000001000000; //input27 (R6)
+  Ref_Bselect[27] = 32'b00000000000010000000000000000000; //input27 (R19)
+  Ref_Dselect[27] = 32'b00000000000000000000000001000000; //input25 (R6)
+  Ref_Imm[27] =1'b1;  //input26 
+  Ref_Cin[27] =1'b0;  //input26 
+  Ref_S[27] = SADD; //input26 
+  
+  // ---------- 
+  // 28. SUB R24, R1, R14
+  // ----------
+  //         opcode   source1   source2   dest      shift     Function...
+  ibustm[28]={Rformat, 5'b00001, 5'b01110, 5'b11000, 5'b00000, SUB};
+
+  Ref_Aselect[28] = 32'b00000000000000000000000000000010; //input28 (R1)
+  Ref_Bselect[28] = 32'b00000000000000000100000000000000; //input28 (R14)
+  Ref_Dselect[28] = 32'b00100000000000000000000000000000; //input26 (R29)
+  Ref_Imm[28] =1'b0;  //input27 
+  Ref_Cin[28] =1'b0;  //input27 
+  Ref_S[28] = SADD; //input27 
+  
+  // ---------- 
+  // 29. AND R17, R6, R5
+  // ----------
+  //         opcode   source1   source2   dest      shift     Function...
+  ibustm[29]={Rformat, 5'b00110, 5'b00101, 5'b10001, 5'b00000, AND};
+
+  Ref_Aselect[29] = 32'b00000000000000000000000001000000; //input29 (R6)
+  Ref_Bselect[29] = 32'b00000000000000000000000000100000; //input29 (R5)
+  Ref_Dselect[29] = 32'b00000000010000000000000000000000; //input27 (R22)
+  Ref_Imm[29] =1'b0;  //input28 
+  Ref_Cin[29] =1'b1;  //input28 
+  Ref_S[29] = SSUB; //input28 
+  
+  // ---------- 
+  // 30. OR R3, R19, R27
+  // ----------
+  //         opcode   source1   source2   dest      shift     Function...
+  ibustm[30]={Rformat, 5'b10011, 5'b11011, 5'b00011, 5'b00000, OR};
+
+  Ref_Aselect[30] = 32'b00000000000010000000000000000000; //input30 (R19)
+  Ref_Bselect[30] = 32'b00001000000000000000000000000000; //input30 (R27)
+  Ref_Dselect[30] = 32'b00000001000000000000000000000000; //input28 (R24)
+  Ref_Imm[30] =1'b0;  //input29 
+  Ref_Cin[30] =1'b0;  //input29 
+  Ref_S[30] = SAND; //input29 
+  
+  // ---------- 
+  // 31. ADD R1, R7, R9
+  // ----------
+  //         opcode   source1   source2   dest      shift     Function...
+  ibustm[31]={Rformat, 5'b00111, 5'b01001, 5'b00001, 5'b00000, OR};
+
+  Ref_Aselect[31] = 32'b00000000000000000000000010000000; //input31 (R7)
+  Ref_Bselect[31] = 32'b00000000000000000000001000000000; //input31 (R9)
+  Ref_Dselect[31] = 32'b00000000000000100000000000000000; //input29 (R17)
+  Ref_Imm[31] =1'b0;  //input30 
+  Ref_Cin[31] =1'b0;  //input30 
+  Ref_S[31] = SOR; //input30 
+
+ntests = 31;
 
 $timeformat(-9,1,"ns",12); 
 
@@ -295,7 +488,7 @@ initial begin
   ibus = ibustm[0];
   #25;
  
-  for (k=1; k<= 16; k=k+1) begin
+  for (k=1; k<= 31; k=k+1) begin
   $display("-------------------------------");
   $display("Time=%t   Instruction Number: %d ",$realtime,k);
  $display("-------------------------------");
