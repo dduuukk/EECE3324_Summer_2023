@@ -25,7 +25,8 @@ module decodeopcode(
     input [5:0] funct,
     output reg Imm,
     output reg [2:0] S,
-    output reg Cin
+    output reg Cin,
+    output reg isLW, isSW
     );
     always @(code, funct, S, Imm, Cin) begin
         case(code)
@@ -34,33 +35,61 @@ module decodeopcode(
                 S = 3'b010;
                 Imm = 1'b1;
                 Cin = 1'b0;
+                isLW = 1'b0;
+                isSW = 1'b0;
             end
             6'b000010:
             begin
                 S = 3'b011;
                 Imm = 1'b1;
                 Cin = 1'b1;
+                isLW = 1'b0;
+                isSW = 1'b0;
             end
             6'b000001:
             begin
                 S = 3'b000;
                 Imm = 1'b1;
                 Cin = 1'b0;
+                isLW = 1'b0;
+                isSW = 1'b0;
             end
             6'b001111:
             begin
                 S = 3'b110;
                 Imm = 1'b1;
                 Cin = 1'b0;
+                isLW = 1'b0;
+                isSW = 1'b0;
             end
             6'b001100:
             begin
                 S = 3'b100;
                 Imm = 1'b1;
                 Cin = 1'b0;
+                isLW = 1'b0;
+                isSW = 1'b0;
+            end
+            6'b011110:
+            begin
+                S = 3'b010;
+                Imm = 1'b1;
+                Cin = 1'b0;
+                isLW = 1'b1;
+                isSW = 1'b0;
+            end
+            6'b011111:
+            begin
+                S = 3'b010;
+                Imm = 1'b1;
+                Cin = 1'b0;
+                isLW = 1'b0;
+                isSW = 1'b1;
             end
             6'b00000:
             begin
+                isLW = 1'b0;
+                isSW = 1'b0;
                 case(funct)
                     6'b000011:
                     begin

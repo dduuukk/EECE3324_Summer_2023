@@ -9,17 +9,18 @@ module alupipe(
     input Imm,
     input clk,
     input Cin,
+    input SWflag,
+    input LWflag,
     output [31:0] dbus,
-    output [31:0] abusout,
-    output [31:0] bbusout
-    
+    inout [31:0] databus,
+    output [31:0] daddrbus
     );
     
     wire [31:0] AtoALU, BtoMUX, ALUtoD, IMMtoMUX, MUXtoALU;
     
     reg32 A(.d(abus), 
             .clk(clk), 
-            .q(abusout));
+            .q(AtoALU));
     reg32 B(.d(bbus), 
             .clk(clk), 
             .q(BtoMUX)); 
@@ -27,7 +28,7 @@ module alupipe(
     mux2to1 IMMorBselect(
         .a(ImmVal),
         .b(BtoMUX),
-        .out(bbusout),
+        .out(BtoALU),
         .select(Imm)
     );
     
@@ -35,12 +36,47 @@ module alupipe(
     alu32 alu(.d(ALUtoD), 
               .Cout(), 
               .V(), 
-              .a(abusout),
-              .b(bbusout),
+              .a(AtoALU),
+              .b(BtoALU),
               .Cin(Cin), 
               .S(S));
               
-    reg32 D(.d(ALUtoD), 
+    reg32 EXMEMD(.d(ALUtoD), 
             .clk(clk), 
-            .q(dbus));
+            .q(daddrbus));
+            
+    reg32 EXMEMB(.d(BtoMUX), 
+            .clk(clk), 
+            .q(databustoMUX));
+     
+     wire [31:0] daddrMEMWBin;
+     assign daddrMEMWBin = daddrbus;
+     reg32 daddrbusMEMWB(
+        .d(daddrMEMWBin), 
+        .clk(clk), 
+        .q(DADDRtoMUX)
+    );
+    
+    mux2to1 databusSelect(
+        .a(databustoMUX),
+        .b(32'hzzzzzzzz),
+        .out(databus),
+        .select(SWflag)
+    );
+    
+    reg32 dbusMEMWB(
+        .d(databus), 
+        .clk(clk), 
+        .q(DATAtoMUX)
+    );
+    
+    mux2to1 dbusOUT(
+        .a(DATAtoMUX),
+        .b(DADDRtoMUX),
+        .out(dbus),
+        .select(LWflag)
+    );
+            
+    
+
 endmodule

@@ -23,14 +23,15 @@
 module cpu3(
     input [31:0] ibus,
     input clk,
-    output [31:0] abus,
-    output [31:0] bbus,
-    output [31:0] dbus 
+    inout [31:0] databus,
+    output [31:0] daddrbus
+    
     );
     
     wire [31:0] REGAselect, REGBselect, REGDselect, IMMVALtoMUX;
     wire [2:0] SELtoALU;
     wire CINtoALU, IMMtoMUX;
+    wire LWflag,SWflag;
     
     controller Controller(
         .ibus(ibus),
@@ -41,7 +42,9 @@ module cpu3(
         .immValue(IMMVALtoMUX),
         .Cin(CINtoALU),
         .S(SELtoALU),
-        .Imm(IMMtoMUX)   
+        .Imm(IMMtoMUX) ,
+        .LWflag(LWflag),
+        .SWflag(SWflag)
     );
     
     regalu Regalu(
@@ -51,11 +54,12 @@ module cpu3(
         .ImmVal(IMMVALtoMUX),
         .Imm(IMMtoMUX),
         .clk(clk),
-        .abus(abus),
-        .bbus(bbus),
-        .dbus(dbus),
         .S(SELtoALU),
-        .Cin(CINtoALU)
+        .Cin(CINtoALU),
+        .databus(databus),
+        .daddrbus(daddrbus),
+        .SWflag(SWflag),
+        .LWflag(LWflag)
     );
 
 endmodule

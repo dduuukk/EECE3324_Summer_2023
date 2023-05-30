@@ -8,11 +8,12 @@ module regalu(
     input [31:0] ImmVal,
     input Imm,
     input clk,
-    output [31:0] abus,
-    output [31:0] bbus,
-    output [31:0] dbus,
+    inout [31:0] databus,
+    output [31:0] daddrbus,
     input [2:0] S,
-    input Cin
+    input Cin,
+    input LWflag,
+    input SWflag
     );
 
     regfile32x32 regfile(
@@ -25,7 +26,7 @@ module regalu(
         .bbus(REGtoALUb)
     );
     
-    wire [31:0] REGtoALUa, REGtoALUb;
+    wire [31:0] REGtoALUa, REGtoALUb, dbus;
     
     alupipe alu(
         .S(S),
@@ -36,6 +37,11 @@ module regalu(
         .clk(clk),
         .Cin(Cin),
         .dbus(dbus),
-        .abusout(abus),
-        .bbusout(bbus));
+        .databus(databus),
+        .daddrbus(daddrbus),
+        .LWflag(LWflag),
+        .SWflag(SWflag)
+    );
+
+    
 endmodule
