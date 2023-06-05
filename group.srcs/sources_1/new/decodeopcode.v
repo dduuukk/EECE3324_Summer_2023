@@ -64,7 +64,7 @@ module decodeopcode(
             end
             6'b001100:
             begin
-                S = 3'b100;
+                S = 3'b111;
                 Imm = 1'b1;
                 Cin = 1'b0;
                 isLW = 1'b0;
@@ -72,8 +72,8 @@ module decodeopcode(
             end
             6'b011110:
             begin
-                S = 3'b010;
-                Imm = 1'b1;
+                S = 3'b111;
+                Imm = 1'b0;
                 Cin = 1'b0;
                 isLW = 1'b1;
                 isSW = 1'b0;
@@ -81,7 +81,7 @@ module decodeopcode(
             6'b011111:
             begin
                 S = 3'b010;
-                Imm = 1'b1;
+                Imm = 1'b0;
                 Cin = 1'b0;
                 isLW = 1'b0;
                 isSW = 1'b1;
