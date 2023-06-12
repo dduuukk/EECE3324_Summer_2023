@@ -1,19 +1,55 @@
 `timescale 1ns / 1ps
 
 
-module cpu5(
+module cpu5arm(
     input [31:0] ibus,
     input clk,
-    output [31:0] abus,
-    output [31:0] bbus,
-    output [31:0] dbus,
-    inout [31:0] databus,
-    output [31:0] daddrbus
+    input reset,
+    output [63:0] iaddrbus,
+    inout [63:0] databus,
+    output [63:0] daddrbus
     );
     
-    wire [31:0] REGAselect, REGBselect, REGDselect, IMMVALtoMUX;
+    wire [31:0] REGAselect, REGBselect, REGDselect, IMMVALtoMUX, nextInst, multResult;
     wire [2:0] SELtoALU;
     wire CINtoALU, IMMtoMUX, LWF, SWF, SLT, SLE;
+    wire [31:0] nextInstStep, nextInstJump;
+    wire branchTrue;
+    wire[31:0] instJumpStart;
+    
+    
+    
+    mux2to1 instMux(
+        .a(nextInstJump),
+        .b(nextInstStep),
+        .out(nextInst),
+        .select(branchTrue)
+    );
+    
+    reg32reset PC(
+        .d(nextInst),
+        .q(iaddrbus),
+        .reset(reset),
+        .clk(clk)    
+    );
+    
+    adder plusFour(
+        .A(iaddrbus),
+        .B(32'h00000004),
+        .out(nextInstStep)
+    );  
+    
+    reg32 IFIDInstruction(
+        .d(nextInstStep),
+        .q(instJumpStart),
+        .clk(clk)    
+    );
+    
+    adder branchAdd(
+        .A(multResult),
+        .B(instJumpStart),
+        .out(nextInstJump)
+    );
     
     controller Controller(
         .ibus(ibus),
@@ -27,8 +63,11 @@ module cpu5(
         .Imm(IMMtoMUX),
         .LWFlag(LWF),
         .SWFlag(SWF),
+        .BEQFlag(BEQFlag),
+        .BNEFlag(BNEFlag),
         .SLTFlag(SLT),
-        .SLEFlag(SLE) 
+        .SLEFlag(SLE),
+        .multResult(multResult)
     );
     
     regalu Regalu(
@@ -38,13 +77,16 @@ module cpu5(
         .ImmVal(IMMVALtoMUX),
         .Imm(IMMtoMUX),
         .clk(clk),
-        .abus(abus),
-        .bbus(bbus),
-        .dbus(dbus),
+        .abus(),
+        .bbus(),
+        .dbus(),
         .S(SELtoALU),
         .Cin(CINtoALU),
         .LWFlag(LWF),
         .SWFlag(SWF),
+        .BEQFlag(BEQFlag),
+        .BNEFlag(BNEFlag),
+        .branchTrue(branchTrue),
         .SLTFlag(SLT),
         .SLEFlag(SLE),
         .databus(databus),
@@ -53,17 +95,36 @@ module cpu5(
 
 endmodule
 
+module adder (
+    input [31:0] A, 
+    input [31:0] B,
+    output reg [31:0] out
+    );
+    always @(A, B, out)
+        out = A + B;
+endmodule
+
+module multiplier (
+    input [31:0] A, 
+    input [31:0] B,
+    output reg [31:0] out
+    );
+    always @(A, B, out)
+        out = A * B;
+endmodule
+
 module controller(
     input [31:0] ibus,
     input clk,
     output [31:0] Aselect,
     output [31:0] Bselect,
     output [31:0] Dselect,
-    output [31:0] immValue,
+    output [31:0] immValue, multResult,
     output Cin,
     output [2:0] S,
     output Imm,
     output LWFlag, SWFlag,
+    output BEQFlag, BNEFlag,
     output SLTFlag, SLEFlag 
     );
     
@@ -71,28 +132,40 @@ module controller(
     wire decodeImm, decodeCin;
     wire [2:0] decodeS;
     
+    
     reg32 IFID(.d(ibus), .q(iregtodecoders), .clk(clk));
     
-    decode5to32 rsDecode(
-        .code(iregtodecoders[25:21]),
+    
+    multiplier multfour(
+        .A(IMMtoIDEX),
+        .B(32'h00000004),
+        .out(multResult)
+    );
+    
+    
+    
+    decode5to32 rnDecode(
+        .code(iregtodecoders[9:5]),
         .out(Aselect)    
     );
-    decode5to32 rtDecode(
-        .code(iregtodecoders[20:16]),
+    decode5to32 rmDecode(
+        .code(iregtodecoders[19:16]),
         .out(Bselect)    
     );
     decode5to32 rdDecode(
-        .code(iregtodecoders[15:11]),
+        .code(iregtodecoders[4:0]),
         .out(rdtomux)    
     );
     decodeopcode opdecode(
-        .code(iregtodecoders[31:26]),
+        .code(iregtodecoders[31:21]),
         .funct(iregtodecoders[5:0]),
         .Imm(decodeImm),
         .S(decodeS),
         .Cin(decodeCin),
         .LWFlag(LWFlag),
         .SWFlag(SWFlag),
+        .BEQFlag(BEQFlag),
+        .BNEFlag(BNEFlag),
         .SLTFlag(SLTFlag),
         .SLEFlag(SLEFlag)
         
@@ -109,10 +182,10 @@ module controller(
         .select(decodeImm)
     );
     mux2to1 SWdisableWrite(
-        .a(32'h000000001),
+        .a(32'h00000001),
         .b(MUXtoDWB),
         .out(MUXtoIDEX),
-        .select(SWFlag)
+        .select(SWFlag | BNEFlag | BEQFlag)
     );
     
     reg32 IDEXD(.d(MUXtoIDEX), .q(IDEXtoEXMEM), .clk(clk));
@@ -135,6 +208,19 @@ module reg32(
         q = d;
 endmodule
 
+module reg32reset(
+    input [31:0] d,
+    input reset,
+    output reg [31:0] q,
+    input clk      
+    );
+    always@(posedge clk)
+        if(reset)
+            q = 32'h00000000;
+        else
+            q = d;
+endmodule
+
 module decode5to32(
     input [4:0] code,
     output reg [31:0] out
@@ -152,160 +238,106 @@ module decodeopcode(
     output reg [2:0] S,
     output reg Cin,
     output reg SWFlag, LWFlag,
+    output reg BEQFlag, BNEFlag,
     output reg SLTFlag, SLEFlag 
     );
     always @(code, funct, S, Imm, Cin) begin
+        Cin = 1'b0;
+        Imm = 1'b1;
+        SWFlag = 1'b0;
+        LWFlag = 1'b0;
+        BEQFlag = 1'b0;
+        BNEFlag = 1'b0;
+        SLTFlag = 1'b0;
+        SLEFlag = 1'b0;
         case(code)
             6'b000011:
             begin
-                S = 3'b010;
-                Imm = 1'b1;
-                Cin = 1'b0;
-                SWFlag = 1'b0;
-                LWFlag = 1'b0;
-                SLTFlag = 1'b0;
-                SLEFlag = 1'b0;
+                S = 3'b010;                
             end
             6'b000010:
             begin
                 S = 3'b011;
-                Imm = 1'b1;
                 Cin = 1'b1;
-                SWFlag = 1'b0;
-                LWFlag = 1'b0;
-                SLTFlag = 1'b0;
-                SLEFlag = 1'b0;
             end
             6'b000001:
             begin
                 S = 3'b000;
-                Imm = 1'b1;
-                Cin = 1'b0;
-                SWFlag = 1'b0;
-                LWFlag = 1'b0;
-                SLTFlag = 1'b0;
-                SLEFlag = 1'b0;
             end
             6'b001111:
             begin
                 S = 3'b110;
-                Imm = 1'b1;
-                Cin = 1'b0;
-                SWFlag = 1'b0;
-                LWFlag = 1'b0;
-                SLTFlag = 1'b0;
-                SLEFlag = 1'b0;
             end
             6'b001100:
             begin
                 S = 3'b100;
-                Imm = 1'b1;
-                Cin = 1'b0;
-                SWFlag = 1'b0;
-                LWFlag = 1'b0;
-                SLTFlag = 1'b0;
-                SLEFlag = 1'b0;
             end
             6'b011110:
             begin
                 S = 3'b010;
-                Imm = 1'b1;
-                Cin = 1'b0;
-                SWFlag = 1'b0;
                 LWFlag = 1'b1;
-                SLTFlag = 1'b0;
-                SLEFlag = 1'b0;
             end
             6'b011111:
             begin
                 S = 3'b010;
-                Imm = 1'b1;
-                Cin = 1'b0;
                 SWFlag = 1'b1;
-                LWFlag = 1'b0;
-                SLTFlag = 1'b0;
-                SLEFlag = 1'b0;
+            end
+            6'b110000:
+            begin
+                S = 3'b010;
+                BEQFlag = 1'b1;
+            end
+            6'b110001:
+            begin
+                S = 3'b010;
+                BNEFlag = 1'b1;
             end
             6'b00000:
             begin
-                SWFlag = 1'b0;
-                LWFlag = 1'b0;
+                Imm = 1'b0;
                 case(funct)
                     6'b000011:
                     begin
                         S = 3'b010;
-                        Imm = 1'b0;
-                        Cin = 1'b0;
-                        SLTFlag = 1'b0;
-                        SLEFlag = 1'b0;
                     end
                     6'b000010:
                     begin
                         S = 3'b011;
-                        Imm = 1'b0;
                         Cin = 1'b1;
-                        SLTFlag = 1'b0;
-                        SLEFlag = 1'b0;
                     end
                     6'b000001:
                     begin
                         S = 3'b000;
-                        Imm = 1'b0;
-                        Cin = 1'b0;
-                        SLTFlag = 1'b0;
-                        SLEFlag = 1'b0;
                     end
                     6'b000111:
                     begin
                         S = 3'b110;
-                        Imm = 1'b0;
-                        Cin = 1'b0;
-                        SLTFlag = 1'b0;
-                        SLEFlag = 1'b0;
                     end
                     6'b000100:
                     begin
                         S = 3'b100;
-                        Imm = 1'b0;
-                        Cin = 1'b0;
-                        SLTFlag = 1'b0;
-                        SLEFlag = 1'b0;
                     end
                     6'b110110:
                     begin
-                        S = 3'b100;
-                        Imm = 1'b0;
-                        Cin = 1'b0;
+                        S = 3'b011;
+                        Cin = 1'b1;
                         SLTFlag = 1'b1;
-                        SLEFlag = 1'b0;
                     end
                     6'b110111:
                     begin
-                        S = 3'b100;
-                        Imm = 1'b0;
-                        Cin = 1'b0;
-                        SLTFlag = 1'b0;
+                        S = 3'b011;
+                        Cin = 1'b1;
                         SLEFlag = 1'b1;
                     end
                     default:
                     begin
                         S = 3'b000;
-                        Imm = 1'b0;
-                        Cin = 1'b0;
-                        SLTFlag = 1'b0;
-                        SLEFlag = 1'b0;
                     end
                  endcase
             end
             default:
                 begin
                 S = 3'b000;
-                Imm = 1'b0;
-                Cin = 1'b0;
-                SWFlag = 1'b0;
-                LWFlag = 1'b0;
-                SLTFlag = 1'b0;
-                SLEFlag = 1'b0;
                 end
         endcase    
     end
@@ -347,6 +379,16 @@ module reg3(
     always@(posedge clk)
         q = d;
 endmodule
+module branchEQ (
+    input [31:0] A, 
+    input [31:0] B,
+    input BEQInstr, 
+    input BNEInstr,
+    output branchTrue
+    );
+    assign branchTrue = (BEQInstr===1'b1 && A===B) || (BNEInstr===1'b1 && A!==B);
+    
+endmodule
 
 module regalu(
     input [31:0] Aselect,
@@ -361,9 +403,11 @@ module regalu(
     input [2:0] S,
     input Cin,
     input LWFlag, SWFlag,
+    input BEQFlag, BNEFlag,
     input SLTFlag, SLEFlag,
     inout [31:0] databus,
-    output [31:0] daddrbus
+    output [31:0] daddrbus,
+    output branchTrue
     );
     wire [31:0] REGtoALUa, REGtoALUb;
     regfile32x32 regfile(
@@ -374,6 +418,14 @@ module regalu(
         .clk(clk),
         .abus(REGtoALUa),
         .bbus(REGtoALUb)
+    );
+    
+    branchEQ branchLogic(
+        .A(REGtoALUa), 
+        .B(REGtoALUb),
+        .BEQInstr(BEQFlag), 
+        .BNEInstr(BNEFlag),
+        .branchTrue(branchTrue)
     );
     
     
@@ -449,17 +501,19 @@ module setlogic(
     input SLEFlag, SLTFlag,
     output reg [31:0] out
     );
-    always @(SLTFlag, SLEFlag, C, Z, out) begin
-    if(SLTFlag)
+    always @(SLTFlag, SLEFlag, C, Z, out, in) begin
+    out = in;
+    if(SLTFlag===1'b1)
         begin
-        out = (!C & !Z) ? 32'h00000001 : 32'h00000000;
+        out = (!C && !Z) ? 32'h00000001 : 32'h00000000;
         end
-     else if(SLEFlag)
+    
+    if(SLEFlag===1'b1)
         begin
-        out = (!C | Z) ? 32'h00000001 : 32'h00000000;
-        end
-        else
-            out = in;
+        out = (!C || Z) ? 32'h00000001 : 32'h00000000;
+    end
+        
+    
     end
     
 endmodule
@@ -481,7 +535,8 @@ module alupipe(
     output [31:0] daddrbus
     );
        
-    wire [31:0] AtoALU, BtoMUX, SettoD, ALUtoSET, IMMtoMUX, MUXtoALU, databustoMUX, DADDRtoMUX, databusOUTtoMUX, databusAssign;
+    wire [31:0] AtoALU, BtoMUX, SettoD, IMMtoMUX, MUXtoALU, databustoMUX, DADDRtoMUX, databusOUTtoMUX, databusAssign;
+    wire [31:0] ALUtoSET;
 
     wire LWALU, SWALU, LWdb, SWdb, LWout, SWout, Cout;
     
@@ -495,12 +550,12 @@ module alupipe(
         .clk(clk), 
         .q(BtoMUX)
     );
-    reg32 LWin(
+    reg1 LWin(
         .d(LWFlag), 
         .clk(clk), 
         .q(LWALU)
     ); 
-    reg32 SWin(
+    reg1 SWin(
         .d(SWFlag), 
         .clk(clk), 
         .q(SWALU)
@@ -512,29 +567,40 @@ module alupipe(
         .select(Imm)
     );
     
-    alu32 alu(
-        .d(ALUtoD), 
-        .Cout(Cout), 
+    alu64 alu(
+        .d(ALUtoSET), 
+        .C(Cout), 
         .V(), 
         .Z(Z),
+        .N(),
         .a(abusout),
         .b(bbusout),
         .Cin(Cin), 
         .S(S)
      );
-    
+     wire SLEout, SLTout;
+    reg1 SLEin(
+        .d(SLEFlag), 
+        .clk(clk), 
+        .q(SLEout)
+    ); 
+    reg1 SLTin(
+        .d(SLTFlag), 
+        .clk(clk), 
+        .q(SLTout)
+    );
     setlogic thing(
-        .in(ALUtoSet),
+        .in(ALUtoSET),
         .C(Cout),
         .Z(Z),
-        .SLEFlag(SLEFlag),
-        .SLTFlag(SLTFlag),
+        .SLEFlag(SLEout),
+        .SLTFlag(SLTout),
         .out(SettoD)
     );
     
         
     reg32 DADDRin(
-        .d(ALUtoD), 
+        .d(SettoD), 
         .clk(clk), 
         .q(daddrbus)
     );
@@ -543,27 +609,17 @@ module alupipe(
         .clk(clk), 
         .q(databustoMUX)
     );
-    reg32 SWoutALU(
+    reg1 SWoutALU(
         .d(SWALU), 
         .clk(clk), 
         .q(SWdb)
     );
-    reg32 LWoutALU(
+    reg1 LWoutALU(
         .d(LWALU), 
         .clk(clk), 
         .q(LWdb)
     );
-//    mux2to1 databusSelect(
-//        .a(databustoMUX),
-//        .b(32'hzzzzzzzz),
-//        .out(databus),
-//        .select(SWflag)
-//    );
-//    tristate tristateFloating(
-//        .enable(SWdb),
-//        .data(databustoMUX),
-//        .inoutPort(databus)
-//    );
+    
     assign databus = SWdb ? databustoMUX : 32'bz;
     
     reg32 DADDROUT(
@@ -577,7 +633,7 @@ module alupipe(
         .q(databusOUTtoMUX)
     );
 
-    reg32 LWoutReg(
+    reg1 LWoutReg(
         .d(LWdb), 
         .clk(clk), 
         .q(LWout)
@@ -588,22 +644,22 @@ module alupipe(
         .out(dbus),
         .select(LWout)
     );
-    
- 
 endmodule
 
-module alu32 (d, Cout, V, a, b, Cin, S, Z);
-   output[31:0] d;
-   output Cout, V, Z;
-   input [31:0] a, b;
+
+//==== 64-BIT ALU =========================================
+module alu64 (d, Cout, V, a, b, Cin, S, Z);
+   output [63:0] d;
+   output C, V, Z, N;
+   input [63:0] a, b;
    input Cin;
    input [2:0] S;
    
    wire [31:0] c, g, p;
    wire gout, pout;
    
-   //alu cells for each bit
-   alu_cell alucell[31:0] (
+   //Alu cells for each bit
+   alu_cell alucell[63:0] (
       .d(d),
       .g(g),
       .p(p),
@@ -613,8 +669,8 @@ module alu32 (d, Cout, V, a, b, Cin, S, Z);
       .S(S)
    );
    
-   //LAC tree
-   lac5 laclevel5(
+   //LAC Tree
+   lac6 laclevel6(
       .c(c),
       .gout(gout),
       .pout(pout),
@@ -623,14 +679,14 @@ module alu32 (d, Cout, V, a, b, Cin, S, Z);
       .p(p)
    );
 
-   //overflow calculation 
-   assign Cout = gout | (pout & Cin);
-   assign V = Cout ^ c[31];
-   assign Z = !(|d);
-  
+   //Flag Calculations
+   assign C = gout | (pout & Cin); //Carry-out flag
+   assign V = Cout ^ c[63]; //Overflow flag
+   assign Z = !(|d); // Zero flag
+   assign N = (d < 64'h0000000000000000) ? 1'b1 : 1'b0; //Negative flag
 endmodule
 
-
+//==== ALU CELL =======================
 module alu_cell (d, g, p, a, b, c, S);
     output reg d;
     output g, p;
@@ -645,23 +701,23 @@ module alu_cell (d, g, p, a, b, c, S);
     assign cint = (~S[2] & S[1]) & c;
     
     //case statements for functions, according to the assignment doc
-    always@(d,p,cint,a,b,S) 
-        case (S)
+    always @ (d, p, cint, a, b, S) 
+        case(S)
             3'b000, 3'b001, 3'b010, 3'b011:
-                d = p ^ cint;
-                
+                d = p ^ cint;    
             3'b100:
                 d = a|b;
-                
             3'b101:
                 d = ~(a | b);
             3'b110:
                 d = a & b;
             3'b111:
                 d = 1'b0;
-    endcase
+        endcase
+    end
 endmodule
 
+//==== LAC TREES ======================
 module lac(c, gout, pout, Cin, g, p);
     // base LAC, given in class slides
     output [1:0] c;
@@ -674,7 +730,6 @@ module lac(c, gout, pout, Cin, g, p);
     assign gout = g[1]|(p[1]&g[0]);
     assign pout = p[1]&p[0];
 endmodule
-
 
 module lac2(c, gout, pout, Cin, g, p);
     output [3:0] c;
@@ -710,10 +765,7 @@ module lac2(c, gout, pout, Cin, g, p);
         .g(gint),
         .p(pint)
     );
-    
-    
 endmodule   
-
 
 module lac3(c, gout, pout, Cin, g, p);
     output [7:0] c;
@@ -751,7 +803,6 @@ module lac3(c, gout, pout, Cin, g, p);
     );
 endmodule
 
-
 module lac4(c, gout, pout, Cin, g, p);
     output [15:0] c;
     output gout, pout;
@@ -788,7 +839,6 @@ module lac4(c, gout, pout, Cin, g, p);
     );
 endmodule
 
-
 module lac5(c, gout, pout, Cin, g, p);
     //top-level LAC tree
     output [31:0] c;
@@ -814,6 +864,43 @@ module lac5(c, gout, pout, Cin, g, p);
         .Cin(cint[1]),
         .g(g[31:16]),
         .p(p[31:16])
+    );
+    
+    lac root(
+        .c(cint),
+        .gout(gout),
+        .pout(pout),
+        .Cin(Cin),
+        .g(gint),
+        .p(pint)
+    );
+endmodule
+
+module lac6(c, gout, pout, Cin, g, p);
+    //top-level LAC tree
+    output [31:0] c;
+    output gout, pout;
+    input Cin;
+    input [31:0] g, p;
+    
+    wire [1:0] cint, gint, pint;
+    
+    lac5 leaf0(
+        .c(c[31:0]),
+        .gout(gint[0]),
+        .pout(pint[0]),
+        .Cin(cint[0]),
+        .g(g[31:0]),
+        .p(p[31:0])
+    );
+    
+    lac5 leaf1(
+        .c(c[63:32]),
+        .gout(gint[1]),
+        .pout(pint[1]),
+        .Cin(cint[1]),
+        .g(g[63:32]),
+        .p(p[63:32])
     );
     
     lac root(
