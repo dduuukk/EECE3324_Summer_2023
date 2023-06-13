@@ -232,7 +232,7 @@ module decode5to32(
 endmodule
 
 module decodeopcode(
-    input [5:0] code,
+    input [10:0] code,
     input [5:0] funct,
     output reg Imm,
     output reg [2:0] S,
@@ -250,91 +250,195 @@ module decodeopcode(
         BNEFlag = 1'b0;
         SLTFlag = 1'b0;
         SLEFlag = 1'b0;
-        case(code)
+        case(code[10:5]) 
+            6'b001010:
+            //R-Format
+            begin
+                case(code[4:0]) 
+                    5'b00000:
+                    //ADD
+                    begin
+                        S = 3'b010;                
+                    end 
+                    5'b00001:
+                    //ADDS
+                    begin
+                        S = 3'b010;                
+                    end 
+                    5'b00010:
+                    //AND
+                    begin
+                        S = 3'b010;                
+                    end   
+                    5'b00011:
+                    //ANDS
+                    begin
+                        S = 3'b010;                
+                    end 
+                    5'b00100:
+                    //EOR
+                    begin
+                        S = 3'b010;                
+                    end 
+                    5'b00101:
+                    //ENOR
+                    begin
+                        S = 3'b010;                
+                    end 
+                    5'b00110:
+                    //LSL
+                    begin
+                        S = 3'b010;                
+                    end 
+                    5'b00111:
+                    //LSR
+                    begin
+                        S = 3'b010;                
+                    end 
+                    5'b01000:
+                    //ORR
+                    begin
+                        S = 3'b010;                
+                    end 
+                    5'b01001:
+                    //SUB
+                    begin
+                        S = 3'b010;                
+                    end 
+                    5'b01010:
+                    //SUBS
+                    begin
+                        S = 3'b010;                
+                    end 
+                endcase            
+            end
+            
+            6'b100010:
+            //I-Format
+            begin
+                case(code[4:1]) 
+                    4'b0000:
+                    //ADDI
+                    begin
+                        S = 3'b010;                
+                    end 
+                    4'b0001:
+                    //ADDIS
+                    begin
+                        S = 3'b010;                
+                    end 
+                    4'b0010:
+                    //ANDI
+                    begin
+                        S = 3'b010;                
+                    end   
+                    4'b0011:
+                    //ANDIS
+                    begin
+                        S = 3'b010;                
+                    end 
+                    4'b0100:
+                    //EORI
+                    begin
+                        S = 3'b010;                
+                    end 
+                    4'b0101:
+                    //ENORI
+                    begin
+                        S = 3'b010;                
+                    end 
+                    4'b0110:
+                    //ORRI
+                    begin
+                        S = 3'b010;                
+                    end 
+                    4'b0111:
+                    //SUBI
+                    begin
+                        S = 3'b010;                
+                    end 
+                    4'b1000:
+                    //SUBIS
+                    begin
+                        S = 3'b010;                
+                    end
+                endcase
+            end
+
+            6'b110100:
+            //D-Format
+            begin
+                case(code[4:0]) 
+                    5'b00000:
+                    //LDUR
+                    begin
+                        S = 3'b010;                
+                    end 
+                    5'b00001:
+                    //STUR
+                    begin
+                        S = 3'b010;                
+                    end 
+                endcase
+            end
+
+            6'b110010:
+            //IM-Format
+            begin
+                case(code[4:2]) 
+                    3'b101:
+                    //LDUR
+                    begin
+                        S = 3'b010;                
+                    end 
+                    3'b:
+                endcase
+            end
+
             6'b000011:
-            begin
-                S = 3'b010;                
-            end
-            6'b000010:
-            begin
-                S = 3'b011;
-                Cin = 1'b1;
-            end
-            6'b000001:
-            begin
-                S = 3'b000;
-            end
-            6'b001111:
-            begin
-                S = 3'b110;
-            end
-            6'b001100:
+            //B-Format
             begin
                 S = 3'b100;
             end
-            6'b011110:
+            
+            6'b111101, 6'b011101:
+            //CB-Format pt.1
             begin
-                S = 3'b010;
-                LWFlag = 1'b1;
+                case(code[10:3]) 
+                    8'b11110100:
+                    //CBZ
+                    begin
+                        S = 3'b010;                
+                    end 
+                    8'b11110101:
+                    //CBNZ
+                    begin
+                        S = 3'b010;                
+                    end 
+                    8'b01110100:
+                    //BEQ
+                    begin
+                        S = 3'b010;                
+                    end 
+                    8'b01110101:
+                    //BNE
+                    begin
+                        S = 3'b010;                
+                    end 
+                    8'b01110110:
+                    //BLT
+                    begin
+                        S = 3'b010;                
+                    end 
+                    8'b01110111:
+                    //BGE
+                    begin
+                        S = 3'b010;                
+                    end 
+                    
+                endcase
             end
-            6'b011111:
-            begin
-                S = 3'b010;
-                SWFlag = 1'b1;
-            end
-            6'b110000:
-            begin
-                S = 3'b010;
-                BEQFlag = 1'b1;
-            end
-            6'b110001:
-            begin
-                S = 3'b010;
-                BNEFlag = 1'b1;
-            end
-            6'b00000:
-            begin
-                Imm = 1'b0;
-                case(funct)
-                    6'b000011:
-                    begin
-                        S = 3'b010;
-                    end
-                    6'b000010:
-                    begin
-                        S = 3'b011;
-                        Cin = 1'b1;
-                    end
-                    6'b000001:
-                    begin
-                        S = 3'b000;
-                    end
-                    6'b000111:
-                    begin
-                        S = 3'b110;
-                    end
-                    6'b000100:
-                    begin
-                        S = 3'b100;
-                    end
-                    6'b110110:
-                    begin
-                        S = 3'b011;
-                        Cin = 1'b1;
-                        SLTFlag = 1'b1;
-                    end
-                    6'b110111:
-                    begin
-                        S = 3'b011;
-                        Cin = 1'b1;
-                        SLEFlag = 1'b1;
-                    end
-                    default:
-                    begin
-                        S = 3'b000;
-                    end
-                 endcase
-            end
+            
             default:
                 begin
                 S = 3'b000;
@@ -520,46 +624,58 @@ endmodule
 
 module alupipe(
     input [2:0] S,
-    input [31:0] abus,
-    input [31:0] bbus,
-    input [31:0] ImmVal,
+    input [63:0] abus,
+    input [63:0] bbus,
+    input [63:0] ImmVal,
     input Imm,
     input clk,
     input Cin,
-    output [31:0] dbus,
-    output [31:0] abusout,
-    output [31:0] bbusout,
     input LWFlag, SWFlag,
     input SLEFlag, SLTFlag,
-    inout [31:0] databus,
-    output [31:0] daddrbus
+    output [63:0] dbus,
+    output [63:0] abusout,
+    output [63:0] bbusout,
+    inout [63:0] databus,
+    output [63:0] daddrbus,
+    output C, N, Z, V
     );
        
     wire [31:0] AtoALU, BtoMUX, SettoD, IMMtoMUX, MUXtoALU, databustoMUX, DADDRtoMUX, databusOUTtoMUX, databusAssign;
     wire [31:0] ALUtoSET;
 
-    wire LWALU, SWALU, LWdb, SWdb, LWout, SWout, Cout;
+    wire LWALU, SWALU, LWdb, SWdb, LWout, SWout;
     
+    //---- IDEX -----------------------
+    //abus into IDEX out to abusout -> alu
     reg32 A(
         .d(abus), 
         .clk(clk), 
         .q(abusout)
     );
+
+    //bbus into IDEX out to BtoMUX -> mux
     reg32 B(
         .d(bbus), 
         .clk(clk), 
         .q(BtoMUX)
     );
+
+    //LWFlag into IDEX and out to LWALU
     reg1 LWin(
         .d(LWFlag), 
         .clk(clk), 
         .q(LWALU)
     ); 
+
+    //SWFlag into IDEX and out to SWALU
     reg1 SWin(
         .d(SWFlag), 
         .clk(clk), 
         .q(SWALU)
     );
+
+    //---- Execute Stage Interior -----
+    //Immediate value and B into MUX, selected by imm (IMMFlag), out to bbusout -> alu
     mux2to1 IMMorBselect(
         .a(ImmVal),
         .b(BtoMUX),
@@ -567,12 +683,13 @@ module alupipe(
         .select(Imm)
     );
     
+    //
     alu64 alu(
         .d(ALUtoSET), 
-        .C(Cout), 
-        .V(), 
+        .C(C), 
+        .V(V), 
         .Z(Z),
-        .N(),
+        .N(N),
         .a(abusout),
         .b(bbusout),
         .Cin(Cin), 
@@ -591,7 +708,7 @@ module alupipe(
     );
     setlogic thing(
         .in(ALUtoSET),
-        .C(Cout),
+        .C(C),
         .Z(Z),
         .SLEFlag(SLEout),
         .SLTFlag(SLTout),
@@ -705,14 +822,14 @@ module alu_cell (d, g, p, a, b, c, S);
         case(S)
             3'b000, 3'b001, 3'b010, 3'b011:
                 d = p ^ cint;    
-            3'b100:
+            3'b100: //OR
                 d = a|b;
-            3'b101:
-                d = ~(a | b);
-            3'b110:
+            3'b101: //Logical Shift Left
+                d = a << b;
+            3'b110: //AND
                 d = a & b;
-            3'b111:
-                d = 1'b0;
+            3'b111: //Logical Shift Right
+                d = a >> b;
         endcase
     end
 endmodule
@@ -878,10 +995,10 @@ endmodule
 
 module lac6(c, gout, pout, Cin, g, p);
     //top-level LAC tree
-    output [31:0] c;
+    output [63:0] c;
     output gout, pout;
     input Cin;
-    input [31:0] g, p;
+    input [63:0] g, p;
     
     wire [1:0] cint, gint, pint;
     
