@@ -124,11 +124,13 @@ module controller(
     output [2:0] S,
     output Imm,
     output LWFlag, SWFlag,
-    output BEQFlag, BNEFlag,
-    output SLTFlag, SLEFlag 
+    //ARM Flags
+    output ALUOutFlag, ShiftFlag, DFlag, BFlag, IMFlag,
+    output [5:0] CBFlags
     );
     
     wire [31:0] iregtodecoders, rdtomux, MUXtoIDEX, IDEXtoEXMEM,IMMtoIDEX, DSELtoMEMWB, MUXtoDWB;
+    wire [32:0] rmtoMUX, rdtoMUX, ALUImmtoMUX, ShamttoMUX, DTAddrtoMUX;
     wire decodeImm, decodeCin;
     wire [2:0] decodeS;
     
@@ -142,39 +144,62 @@ module controller(
         .out(multResult)
     );
     
-    
-    
+    //---- DECODER Phase ----------------------------------
     decode5to32 rnDecode(
         .code(iregtodecoders[9:5]),
         .out(Aselect)    
     );
     decode5to32 rmDecode(
-        .code(iregtodecoders[19:16]),
-        .out(Bselect)    
+        .code(iregtodecoders[20:16]),
+        .out(rmtoMUX)    
     );
-    decode5to32 rdDecode(
+    decode5to32 rdrtDecode(
         .code(iregtodecoders[4:0]),
-        .out(rdtomux)    
+        .out(rdtoMUX)    
     );
     decodeopcode opdecode(
         .code(iregtodecoders[31:21]),
-        .funct(iregtodecoders[5:0]),
         .Imm(decodeImm),
         .S(decodeS),
         .Cin(decodeCin),
         .LWFlag(LWFlag),
         .SWFlag(SWFlag),
-        .BEQFlag(BEQFlag),
-        .BNEFlag(BNEFlag),
-        .SLTFlag(SLTFlag),
-        .SLEFlag(SLEFlag)
+        .ALUOutFlag(ALUOutFlag), 
+        .ShiftFlag(ShiftFlag), 
+        .DFlag(DFlag), 
+        .BFlag(BFlag), 
+        .IMFlag(IMFlag),
+        .CBFlags(CBFlags)
         
     );
-    signextend SignExtend(
-        .in(iregtodecoders[15:0]),
-        .extend(IMMtoIDEX)
+    signextend12to64 SignExtendALUImm(
+        .in(iregtodecoders[21:10]),
+        .extend(ALUImmtoMUX)
+    );
+    signextend26to32 SignExtendB(
+        .in(iregtodecoders[25:0]),
+        .extend(BRAddr)
+    );
+    signextend19to32 SignExtendCondB(
+        .in(iregtodecoders[23:5]),
+        .extend(CondBRAddr)
+    );
+    zeroextend6to64 ZeroExtendShamt(
+        .in(iregtodecoders[15:10]),
+        .extend(ShamttoMUX)
+    );
+    signextend9to64 SignExtendDTAddr(
+        .in(iregtodecoders[20:12]),
+        .extend(DTAddrtoMUX)
     );
     
+    //---- MUX Stage --------------------------------------
+    mux2to1 RMorRDRTMux(
+        .a(rdtoMUX),
+        .b(rmtoMUX),
+        .out(Bselect),
+        .select((CBFlags[0] | CBFlags[1] | SWFlag))
+    );
     mux2to1 decodeMux(
         .a(Bselect),
         .b(rdtomux),
@@ -182,10 +207,19 @@ module controller(
         .select(decodeImm)
     );
     mux2to1 SWdisableWrite(
-        .a(32'h00000001),
+        .a(32'h11111111),
         .b(MUXtoDWB),
         .out(MUXtoIDEX),
-        .select(SWFlag | BNEFlag | BEQFlag)
+        .select(SWFlag || (|CBFlags))
+    );
+    mux4to1 IMMTypeSelector(
+        .a(ALUImmtoMUX),
+        .b(ShamttoMUX),
+        .c(DTAddrtoMUX),
+        .d(),
+        .out(immValue),
+        .select1(DFlag), 
+        .select2(ShiftFlag)
     );
     
     reg32 IDEXD(.d(MUXtoIDEX), .q(IDEXtoEXMEM), .clk(clk));
@@ -233,23 +267,29 @@ endmodule
 
 module decodeopcode(
     input [10:0] code,
-    input [5:0] funct,
     output reg Imm,
     output reg [2:0] S,
+    //ARM Flags
+    output reg ALUOutFlag, ShiftFlag, DFlag, BFlag, IMFlag,
+    output reg [5:0] CBFlags,
+    //MIPS Flags
     output reg Cin,
     output reg SWFlag, LWFlag,
-    output reg BEQFlag, BNEFlag,
-    output reg SLTFlag, SLEFlag 
     );
     always @(code, funct, S, Imm, Cin) begin
+        //MIPS Flags
         Cin = 1'b0;
-        Imm = 1'b1;
+        Imm = 1'b0;
         SWFlag = 1'b0;
         LWFlag = 1'b0;
-        BEQFlag = 1'b0;
-        BNEFlag = 1'b0;
-        SLTFlag = 1'b0;
-        SLEFlag = 1'b0;
+        //ARM Flags
+        ALUOutFlag = 1'b0;
+        ShiftFlag = 1'b0;
+        DFlag = 1'b0;
+        BFlag = 1'b0;
+        IMFlag = 1'b0;
+        CBFlags = 6'b000000;
+
         case(code[10:5]) 
             6'b001010:
             //R-Format
@@ -258,12 +298,13 @@ module decodeopcode(
                     5'b00000:
                     //ADD
                     begin
-                        S = 3'b010;                
+                        S = 3'b010;               
                     end 
                     5'b00001:
                     //ADDS
                     begin
-                        S = 3'b010;                
+                        S = 3'b010; 
+                        ALUOutFlag = 1'b1;             
                     end 
                     5'b00010:
                     //AND
@@ -273,7 +314,8 @@ module decodeopcode(
                     5'b00011:
                     //ANDS
                     begin
-                        S = 3'b010;                
+                        S = 3'b010; 
+                        ALUOutFlag = 1'b1;               
                     end 
                     5'b00100:
                     //EOR
@@ -288,12 +330,16 @@ module decodeopcode(
                     5'b00110:
                     //LSL
                     begin
-                        S = 3'b010;                
+                        S = 3'b101;
+                        ShiftFlag = 1'b1;
+                        Imm = 1'b1;
                     end 
                     5'b00111:
                     //LSR
                     begin
-                        S = 3'b010;                
+                        S = 3'b111; 
+                        ShiftFlag = 1'b1;
+                        Imm = 1'b1;              
                     end 
                     5'b01000:
                     //ORR
@@ -308,7 +354,8 @@ module decodeopcode(
                     5'b01010:
                     //SUBS
                     begin
-                        S = 3'b010;                
+                        S = 3'b010;
+                        ALUOutFlag = 1'b1;                
                     end 
                 endcase            
             end
@@ -316,6 +363,7 @@ module decodeopcode(
             6'b100010:
             //I-Format
             begin
+                Imm = 1'b1;
                 case(code[4:1]) 
                     4'b0000:
                     //ADDI
@@ -325,7 +373,8 @@ module decodeopcode(
                     4'b0001:
                     //ADDIS
                     begin
-                        S = 3'b010;                
+                        S = 3'b010;
+                        ALUOutFlag = 1'b1;                
                     end 
                     4'b0010:
                     //ANDI
@@ -335,7 +384,8 @@ module decodeopcode(
                     4'b0011:
                     //ANDIS
                     begin
-                        S = 3'b010;                
+                        S = 3'b010;
+                        ALUOutFlag = 1'b1;                 
                     end 
                     4'b0100:
                     //EORI
@@ -360,7 +410,8 @@ module decodeopcode(
                     4'b1000:
                     //SUBIS
                     begin
-                        S = 3'b010;                
+                        S = 3'b010;
+                        ALUOutFlag = 1'b1;                 
                     end
                 endcase
             end
@@ -368,16 +419,19 @@ module decodeopcode(
             6'b110100:
             //D-Format
             begin
+                DFlag = 1'b1;
                 case(code[4:0]) 
                     5'b00000:
                     //LDUR
                     begin
-                        S = 3'b010;                
+                        S = 3'b010;
+                        LWFlag = 1'b1;                
                     end 
                     5'b00001:
                     //STUR
                     begin
-                        S = 3'b010;                
+                        S = 3'b010;
+                        SWFlag = 1'b1;                
                     end 
                 endcase
             end
@@ -389,9 +443,9 @@ module decodeopcode(
                     3'b101:
                     //LDUR
                     begin
-                        S = 3'b010;                
+                        S = 3'b010; 
+                        IMFlag = 1'b1;               
                     end 
-                    3'b:
                 endcase
             end
 
@@ -399,6 +453,7 @@ module decodeopcode(
             //B-Format
             begin
                 S = 3'b100;
+                BFlag = 1'b1;
             end
             
             6'b111101, 6'b011101:
@@ -408,32 +463,38 @@ module decodeopcode(
                     8'b11110100:
                     //CBZ
                     begin
-                        S = 3'b010;                
+                        S = 3'b010; 
+                        CBFlags = 6'b000001;               
                     end 
                     8'b11110101:
                     //CBNZ
                     begin
-                        S = 3'b010;                
+                        S = 3'b010; 
+                        CBFlags = 6'b000010;               
                     end 
                     8'b01110100:
                     //BEQ
                     begin
-                        S = 3'b010;                
+                        S = 3'b010; 
+                        CBFlags = 6'b000100;               
                     end 
                     8'b01110101:
                     //BNE
                     begin
-                        S = 3'b010;                
+                        S = 3'b010; 
+                        CBFlags = 6'b001000;               
                     end 
                     8'b01110110:
                     //BLT
                     begin
-                        S = 3'b010;                
+                        S = 3'b010; 
+                        CBFlags = 6'b010000;               
                     end 
                     8'b01110111:
                     //BGE
                     begin
-                        S = 3'b010;                
+                        S = 3'b010;
+                        CBFlags = 6'b100000;                
                     end 
                     
                 endcase
@@ -447,16 +508,47 @@ module decodeopcode(
     end
 endmodule
 
-module signextend(
-    input [15:0] in,
+module signextend12to64(
+    input [11:0] in,
+    output [63:0] extend
+    );
+    
+    assign extend = {{52{in[11]}}, in};  
+endmodule
+
+module zeroextend6to64(
+    input [5:0] in,
+    output [63:0] extend
+    );
+    
+    assign extend = {{51{0}}, in};  
+endmodule
+
+module signextend9to64(
+    input [8:0] in,
+    output [63:0] extend
+    );
+    
+    assign extend = {{55{in[8]}}, in};  
+endmodule
+
+module signextend26to32(
+    input [25:0] in,
     output [31:0] extend
     );
     
-    assign extend = {{16{in[15]}}, in};
-    
+    assign extend = {{5{in[25]}}, in};  
 endmodule
 
-module mux2to1(
+module signextend19to32(
+    input [18:0] in,
+    output [31:0] extend
+    );
+    
+    assign extend = {{14{in[18]}}, in};  
+endmodule
+
+module mux2to32(
     input [31:0] a,
     input [31:0] b,
     output [31:0] out,
@@ -465,6 +557,44 @@ module mux2to1(
     
     assign out = select ? a : b;
 endmodule
+
+module mux2to64(
+    input [63:0] a,
+    input [63:0] b,
+    output [63:0] out,
+    input select
+    );
+    
+    assign out = select ? a : b;
+endmodule
+
+module mux4to1(
+    input [63:0] a,
+    input [63:0] b,
+    input [63:0] c,
+    input [63:0] d,
+    output reg [63:0] out,
+    input select1, select2
+    );
+    
+    always @ (a, b, c, d, out, select) begin
+        case({select1, select2}) 
+            2'b01:
+            begin
+                out = b;
+            end
+            2'b10:
+            begin
+                out = c;
+            end
+            default:
+            begin
+                out = a;
+            end
+        endcase
+    end
+endmodule
+
 
 module reg1(
     input d,
@@ -566,7 +696,7 @@ module regfile32x32(
     
     
     
-    reg32negative registers[31:1](
+    reg32negative registers[30:0](
     .d(dbus),
     .abus(abus),
     .bbus(bbus),
@@ -576,8 +706,8 @@ module regfile32x32(
     .bselect(bselect[31:1])
     );
     
-    assign abus = aselect[0]==1'b1 ? 32'b0 : 32'bz;
-    assign bbus = bselect[0]==1'b1 ? 32'b0 : 32'bz;
+    assign abus = aselect[31]==1'b1 ? 32'b0 : 32'bz;
+    assign bbus = bselect[31]==1'b1 ? 32'b0 : 32'bz;
 endmodule
 
 module reg32negative(
@@ -598,29 +728,6 @@ module reg32negative(
     assign bbus = bselect ? q : 32'bz;
 endmodule
 
-module setlogic(
-    input [31:0] in,
-    input C,
-    input Z,
-    input SLEFlag, SLTFlag,
-    output reg [31:0] out
-    );
-    always @(SLTFlag, SLEFlag, C, Z, out, in) begin
-    out = in;
-    if(SLTFlag===1'b1)
-        begin
-        out = (!C && !Z) ? 32'h00000001 : 32'h00000000;
-        end
-    
-    if(SLEFlag===1'b1)
-        begin
-        out = (!C || Z) ? 32'h00000001 : 32'h00000000;
-    end
-        
-    
-    end
-    
-endmodule
 
 module alupipe(
     input [2:0] S,
@@ -705,16 +812,7 @@ module alupipe(
         .d(SLTFlag), 
         .clk(clk), 
         .q(SLTout)
-    );
-    setlogic thing(
-        .in(ALUtoSET),
-        .C(C),
-        .Z(Z),
-        .SLEFlag(SLEout),
-        .SLTFlag(SLTout),
-        .out(SettoD)
-    );
-    
+    );    
         
     reg32 DADDRin(
         .d(SettoD), 
