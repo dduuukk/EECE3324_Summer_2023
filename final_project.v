@@ -239,13 +239,13 @@ module controller(
         .a(32'h80000000),
         .b(rntoMUX),
         .out(Aselect),
-        .select((CBFlags[0] || CBFlags[1]))
+        .select((CBFlags[0] || CBFlags[1])===1'b1)
     );
     mux2to32 RMorRDRTMux(
         .a(rdtoMUX),
         .b(rmtoMUX),
         .out(Bselect),
-        .select((CBFlags[0] || CBFlags[1] || SWFlag))
+        .select((CBFlags[0] || CBFlags[1] || SWFlag)===1'b1)
     );
     // mux2to1 decodeMux(
     //     .a(Bselect),
@@ -255,9 +255,9 @@ module controller(
     // );
     mux2to32 SWdisableWrite(
         .a(32'h80000000),
-        .b(Bselect),
+        .b(rdtoMUX),
         .out(MUXtoIDEX),
-        .select(decodeSWFlag || (|CBFlags))
+        .select((decodeSWFlag || (|CBFlags))===1'b1)
     );
     switch4to1 IMMTypeSelector(
         .a(ALUImmtoMUX),
