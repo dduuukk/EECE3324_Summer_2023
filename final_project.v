@@ -10,37 +10,37 @@ module cpu5arm(
     output [63:0] daddrbus
     );
     
-    wire [31:0] REGAselect, REGBselect, REGDselect, IMMVALtoMUX, nextInst, multResult;
+    wire [31:0] REGAselect, REGBselect, REGDselect;
     wire [2:0] SELtoALU;
     wire CINtoALU, IMMtoMUX, LWF, SWF, SLT, SLE;
-    wire [31:0] nextInstStep, nextInstJump;
+    wire [63:0] nextInstStep, nextInstJump, nextInst;
     wire branchTrue;
-    wire[31:0] instJumpStart;
+    wire[63:0] instJumpStart;
     wire ALUOutFlag, ShiftFlag, BFlag, IMFlag;
     wire [5:0] CBFlags;
-    wire [63:0] MOVImm;
+    wire [63:0] MOVImm, IMMVALtoMUX, multResult;
     
-    reg32reset PC(
+    reg64reset PC(
         .d(nextInst),
         .q(iaddrbus),
         .reset(reset),
         .clk(clk)    
     );
 
-    mux2to1 instMux(
+    mux2to64 instMux(
         .a(nextInstJump),
         .b(nextInstStep),
         .out(nextInst),
-        .select(branchTrue|condBranchLogic)
+        .select((branchTrue||condBranchLogic) === 1'b1)
     );
 
     adder plusFour(
         .A(iaddrbus),
-        .B(32'h00000004),
+        .B(64'h0000000000000004),
         .out(nextInstStep)
     );  
     
-    reg32 IFIDInstruction(
+    reg64 IFIDInstruction(
         .d(nextInstStep),
         .q(instJumpStart),
         .clk(clk)    
@@ -73,9 +73,7 @@ module cpu5arm(
         .BFlag(BFlag), 
         .IMFlag(IMFlag),
         .CBFlags(CBFlags),
-        .MOVImm(MOVImm),
-        .BRAddr(),
-        .CondBRAddr()
+        .MOVImm(MOVImm)
     );
     
     regalu Regalu(
@@ -110,18 +108,18 @@ module cpu5arm(
 endmodule
 
 module adder (
-    input [31:0] A, 
-    input [31:0] B,
-    output reg [31:0] out
+    input [63:0] A, 
+    input [63:0] B,
+    output reg [63:0] out
     );
     always @(A, B, out)
         out = A + B;
 endmodule
 
 module multiplier (
-    input [31:0] A, 
-    input [31:0] B,
-    output reg [31:0] out
+    input [63:0] A, 
+    input [63:0] B,
+    output reg [63:0] out
     );
     always @(A, B, out)
         out = A * B;
@@ -134,7 +132,7 @@ module controller(
     output [31:0] Aselect,
     output [31:0] Bselect,
     output [31:0] Dselect,
-    output [31:0] immValue, multResult, BRAddr, CondBRAddr,
+    output [63:0] immValue, multResult,
     output Cin,
     output [2:0] S,
     output Imm,
@@ -142,26 +140,30 @@ module controller(
     //ARM Flags
     output ALUOutFlag, IMFlag,
     output [5:0] CBFlags,
+    output BFlag,
     output [63:0] MOVImm
     );
     
     //Signals to ID/EX
-    wire [63:0] iregtodecoders, MUXtoIDEX, IDEXtoEXMEM, IMMtoIDEX, DSELtoMEMWB;
+    wire [63:0] IMMtoIDEX;
     //Signals to MUXs
     wire [63:0] ALUImmtoMUX, ShamttoMUX, DTAddrtoMUX, IWshiftAMT, IWshiftAMTtoMUX;
-    wire [31:0] rntoMUX, rmtoMUX, rdtoMUX;
+    wire [31:0] iregtodecoders, rntoMUX, rmtoMUX, rdtoMUX, MUXtoIDEX, IDEXtoEXMEM, DSELtoMEMWB;
     //Flags to ID/EX
     wire decodeImm, decodeCin, decodeSWFlag, decodeLWFlag, decodeALUOutFlag, decodeShiftFlag, decodeDFlag, decodeBFlag, decodeIMFlag;
     wire [5:0] decodeCBFlags;
     wire [2:0] decodeS;
     
+    //Branch addr before multiplication
+    wire [63:0] BRAddr, CondBRAddr, BranchAddr;
+
     //ibus through IF/ID
     reg32 IFID(.d(ibus), .q(iregtodecoders), .clk(clk));
     
     //Multiplication for branching
     multiplier multfour(
-        .A(IMMtoIDEX),
-        .B(32'h00000004),
+        .A(BranchAddr),
+        .B(64'h0000000000000004),
         .out(multResult)
     );
     
@@ -192,7 +194,7 @@ module controller(
         .IMFlag(IMFlag),
         .CBFlags(CBFlags)
     );
-    zeroextend2to64 rdrtDecode(
+    zeroextend2to64 extendMOVZ(
         .in(iregtodecoders[22:21]),
         .extend(IWshiftAMT)
     );
@@ -200,14 +202,22 @@ module controller(
         .in(iregtodecoders[21:10]),
         .extend(ALUImmtoMUX)
     );
-    signextend26to32 SignExtendB(
+    signextend26to64 SignExtendB(
         .in(iregtodecoders[25:0]),
         .extend(BRAddr)
     );
-    signextend19to32 SignExtendCondB(
+    signextend19to64 SignExtendCondB(
         .in(iregtodecoders[23:5]),
         .extend(CondBRAddr)
     );
+
+    mux2to64 chooseBranchAddr(
+        .a(BRAddr),
+        .b(CondBRAddr),
+        .out(BranchAddr),
+        .select(BFlag)
+    );
+
     zeroextend6to64 ZeroExtendShamt(
         .in(iregtodecoders[15:10]),
         .extend(ShamttoMUX)
@@ -225,13 +235,13 @@ module controller(
     assign IWshiftAMTtoMUX = IWshiftAMT << 4;
     
     //---- MUX Stage --------------------------------------
-    mux2to1 RNorZeroMux(
+    mux2to32 RNorZeroMux(
         .a(32'h80000000),
         .b(rntoMUX),
         .out(Aselect),
         .select((CBFlags[0] || CBFlags[1]))
     );
-    mux2to1 RMorRDRTMux(
+    mux2to32 RMorRDRTMux(
         .a(rdtoMUX),
         .b(rmtoMUX),
         .out(Bselect),
@@ -243,9 +253,9 @@ module controller(
     //     .out(MUXtoDWB),
     //     .select(decodeImm)
     // );
-    mux2to1 SWdisableWrite(
+    mux2to32 SWdisableWrite(
         .a(32'h80000000),
-        .b(MUXtoDWB),
+        .b(Bselect),
         .out(MUXtoIDEX),
         .select(decodeSWFlag || (|CBFlags))
     );
@@ -264,7 +274,7 @@ module controller(
     //Dselect through ID/EX
     reg32 IDEXD(.d(MUXtoIDEX), .q(IDEXtoEXMEM), .clk(clk));
     //immValue through ID/EX
-    reg32 IDEXDImm(.d(IMMtoIDEX), .q(immValue), .clk(clk));
+    reg64 IDEXDImm(.d(IMMtoIDEX), .q(immValue), .clk(clk));
     //immFlag throug ID/EX
     reg1 IDEXImm(.d(decodeImm), .q(Imm), .clk(clk));
     //select through ID/EX
@@ -305,15 +315,24 @@ module reg32(
         q = d;
 endmodule
 
-module reg32reset(
-    input [31:0] d,
+module reg64(
+    input [63:0] d,
+    output reg [63:0] q,
+    input clk      
+    );
+    always@(posedge clk)
+        q = d;
+endmodule
+
+module reg64reset(
+    input [63:0] d,
     input reset,
-    output reg [31:0] q,
+    output reg [63:0] q,
     input clk      
     );
     always@(posedge clk)
         if(reset)
-            q = 32'h00000000;
+            q = 64'h0000000000000000;
         else
             q = d;
 endmodule
@@ -365,9 +384,9 @@ module decodeopcode(
     output reg [5:0] CBFlags,
     //MIPS Flags
     output reg Cin,
-    output reg SWFlag, LWFlag,
+    output reg SWFlag, LWFlag
     );
-    always @(code, funct, S, Imm, Cin) begin
+    always @(code, S, Imm, Cin) begin
         //MIPS Flags
         Cin = 1'b0;
         Imm = 1'b0;
@@ -607,7 +626,7 @@ module signextend12to64(
     output [63:0] extend
     );
     
-    assign extend = {{52{in[11]}}, in};  
+    assign extend = {{32'd52{in[11]}}, in};  
 endmodule
 
 module zeroextend6to64(
@@ -615,15 +634,15 @@ module zeroextend6to64(
     output [63:0] extend
     );
     
-    assign extend = {{51{0}}, in};  
+    assign extend = {{32'd59{1'b0}}, in};  
 endmodule
 
 module zeroextend2to64(
     input [1:0] in,
-    output reg [63:0] extend
+    output [63:0] extend
     );
 
-    assign extend = {{62{0}}, in}; 
+    assign extend = {{32'd62{1'b0}}, in}; 
 endmodule
 
 module signextend9to64(
@@ -631,7 +650,7 @@ module signextend9to64(
     output [63:0] extend
     );
     
-    assign extend = {{55{in[8]}}, in};  
+    assign extend = {{32'd55{in[8]}}, in};  
 endmodule
 
 module signextend16to64(
@@ -639,23 +658,23 @@ module signextend16to64(
     output [63:0] extend
     );
     
-    assign extend = {{48{in[15]}}, in};  
+    assign extend = {{32'd48{in[15]}}, in};  
 endmodule
 
-module signextend26to32(
+module signextend26to64(
     input [25:0] in,
-    output [31:0] extend
+    output [63:0] extend
     );
     
-    assign extend = {{5{in[25]}}, in};  
+    assign extend = {{32'd37{in[25]}}, in};  
 endmodule
 
-module signextend19to32(
+module signextend19to64(
     input [18:0] in,
-    output [31:0] extend
+    output [63:0] extend
     );
     
-    assign extend = {{14{in[18]}}, in};  
+    assign extend = {{32'd46{in[18]}}, in};  
 endmodule
 
 //==== MUX MODULES ========================================
@@ -690,15 +709,15 @@ module switch4to1(
     
     always @ (a, b, c, d, out, select1, select2, select3) begin
         case({select1, select2, select3}) 
-            2'b010:
+            3'b010:
             begin
                 out = d;
             end
-            2'b010:
+            3'b010:
             begin
                 out = b;
             end
-            2'b100:
+            3'b100:
             begin
                 out = c;
             end
@@ -711,8 +730,8 @@ module switch4to1(
 endmodule
 
 module branchEQ (
-    input [31:0] A, 
-    input [31:0] B,
+    input [63:0] A, 
+    input [63:0] B,
     input BEQInstr, 
     input BNEInstr,
     output branchTrue
@@ -725,7 +744,7 @@ module regalu(
     input [31:0] Aselect,
     input [31:0] Bselect,
     input [31:0] Dselect,
-    input [31:0] ImmVal,
+    input [63:0] ImmVal,
     input Imm,
     input clk,
     output [63:0] abus,
@@ -757,24 +776,24 @@ module regalu(
     
     branchEQ branchLogic(
         .A(REGatoMUX), 
-        .B(RegbtoMUX),
+        .B(REGbtoMUX),
         .BEQInstr(CBFlags[0]), 
         .BNEInstr(CBFlags[1]),
         .branchTrue(branchTrue)
     );
 
-    mux2to1 AoutorMOVImm(
+    mux2to64 AoutorMOVImm(
         .a(MOVImm),
         .b(REGatoMUX),
         .out(REGatoIDEX),
         .select(IMFlag)
     );
-    mux2to1 AoutorMOVImm( //talk about where we want to do this!
-        .a(//instruction[22:21]*16?),
+/*    mux2to1 AoutorMOVImm( //talk about where we want to do this!
+        .a(instruction[22:21]*16?),
         .b(REGbtoMUX),
         .out(REGbtoIDEX),
         .select(IMMFlag)
-    );
+    );*/
     
     
     alupipe alu(
@@ -804,10 +823,10 @@ module regfile32x32(
     input [31:0] dselect,
     input [31:0] aselect,
     input [31:0] bselect,
-    input [31:0] dbus,
+    input [63:0] dbus,
     input clk,
-    output [31:0] abus,
-    output [31:0] bbus
+    output [63:0] abus,
+    output [63:0] bbus
     );
     
     reg32negative registers[30:0](
@@ -825,9 +844,9 @@ module regfile32x32(
 endmodule
 
 module reg32negative(
-    input [31:0] d,
-    output [31:0] abus,
-    output [31:0] bbus,
+    input [63:0] d,
+    output [63:0] abus,
+    output [63:0] bbus,
     input aselect,
     input bselect,
     input clk,
@@ -843,12 +862,12 @@ module reg32negative(
 endmodule
 
 module condBranchLogic(
-    input [5:0] flags,
+    input [5:0] CBFlags,
     input C, V, Z, N, 
     output reg branch
     );
-    always @(flags, C, V, Z, N) begin
-        case(flags)
+    always @(CBFlags, C, V, Z, N) begin
+        case(CBFlags)
             5'b0010:
             //EQ
                 begin
@@ -891,11 +910,11 @@ module alupipe(
     inout [63:0] databus,
     output [63:0] daddrbus,
     output takeCondBranch,
-    input ALUOutFlag,
+    input ALUOutFlag
     );
 
-    wire [31:0] AtoALU, BtoMUX, SettoD, IMMtoMUX, MUXtoALU, databustoMUX, DADDRtoMUX, databusOUTtoMUX, databusAssign;
-    wire [31:0] ALUtoSET;
+    wire [63:0] AtoALU, BtoMUX, SettoD, IMMtoMUX, MUXtoALU, databustoMUX, DADDRtoMUX, databusOUTtoMUX, databusAssign;
+    wire [63:0] ALUtoSET;
 
     wire LWALU, SWALU, LWdb, SWdb, LWout, SWout;
     wire Cw, Vw, Zw, Nw;
@@ -903,9 +922,9 @@ module alupipe(
     
     //---- IDEX FOR REG FILE OUTPUTS-----------------------
     //abus into IDEX out to abusout -> alu
-    reg32 A(.d(abus), .clk(clk), .q(abusout));
+    reg64 A(.d(abus), .clk(clk), .q(abusout));
     //bbus into IDEX out to BtoMUX -> mux
-    reg32 B(.d(bbus), .clk(clk), .q(BtoMUX));
+    reg64 B(.d(bbus), .clk(clk), .q(BtoMUX));
 
     // //LWFlag into IDEX and out to LWALU
     // reg1 LWin(.d(LWFlag), .clk(clk), .q(LWALU)); 
@@ -914,7 +933,7 @@ module alupipe(
 
     //---- Execute Stage Interior -------------------------
     //Immediate value and B into MUX, selected by imm (IMMFlag), out to bbusout -> alu
-    mux2to1 IMMorBselect(
+    mux2to64 IMMorBselect(
         .a(ImmVal),
         .b(BtoMUX),
         .out(bbusout),
@@ -944,9 +963,9 @@ module alupipe(
         .bout(V),
         .cout(Z),
         .dout(W)
-    )
+    );
 
-    condBranchLogic condBranchLogic(
+    condBranchLogic condBranchLogicmodule(
         .CBFlags(CBFlags),
         .C(Cw),
         .V(Vw),
@@ -954,17 +973,17 @@ module alupipe(
         .N(Nw),
         .branch(takeCondBranch)
 
-    ) 
+    );
     
     // reg1 SLEin(.d(SLEFlag), .clk(clk), .q(SLEout)); 
     // reg1 SLTin(.d(SLTFlag), .clk(clk), .q(SLTout));    
         
-    reg32 DADDRin(
+    reg64 DADDRin(
         .d(SettoD), 
         .clk(clk), 
         .q(daddrbus)
     );
-    reg32 databusin(
+    reg64 databusin(
         .d(BtoMUX), 
         .clk(clk), 
         .q(databustoMUX)
@@ -982,12 +1001,12 @@ module alupipe(
     
     assign databus = SWdb ? databustoMUX : 32'bz;
     
-    reg32 DADDROUT(
+    reg64 DADDROUT(
         .d(daddrbus), 
         .clk(clk), 
         .q(DADDRtoMUX)
     );
-    reg32 databusOUT(
+    reg64 databusOUT(
         .d(databus), 
         .clk(clk), 
         .q(databusOUTtoMUX)
@@ -998,7 +1017,7 @@ module alupipe(
         .clk(clk), 
         .q(LWout)
     );  
-    mux2to1 dbusOUT(
+    mux2to64 dbusOUT(
         .a(databusOUTtoMUX),
         .b(DADDRtoMUX),
         .out(dbus),
@@ -1034,14 +1053,14 @@ module FoursignalEnable (
 endmodule
 
 //==== 64-BIT ALU =========================================
-module alu64 (d, Cout, V, a, b, Cin, S, Z);
+module alu64 (d, C, V, N, a, b, Cin, S, Z);
    output [63:0] d;
    output C, V, Z, N;
    input [63:0] a, b;
    input Cin;
    input [2:0] S;
    
-   wire [31:0] c, g, p;
+   wire [63:0] c, g, p;
    wire gout, pout;
    
    //Alu cells for each bit
@@ -1067,7 +1086,7 @@ module alu64 (d, Cout, V, a, b, Cin, S, Z);
 
    //Flag Calculations
    assign C = gout | (pout & Cin); //Carry-out flag
-   assign V = Cout ^ c[63]; //Overflow flag
+   assign V = C ^ c[63]; //Overflow flag
    assign Z = !(|d); // Zero flag
    assign N = (d < 64'h0000000000000000) ? 1'b1 : 1'b0; //Negative flag
 endmodule
@@ -1100,7 +1119,7 @@ module alu_cell (d, g, p, a, b, c, S);
             3'b111: //Logical Shift Right
                 d = a >> b;
         endcase
-    end
+    
 endmodule
 
 //==== LAC TREES ======================
