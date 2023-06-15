@@ -245,7 +245,7 @@ module controller(
         .a(rdtoMUX),
         .b(rmtoMUX),
         .out(Bselect),
-        .select((CBFlags[0] || CBFlags[1] || SWFlag)===1'b1)
+        .select((CBFlags[0] || CBFlags[1] || decodeSWFlag)===1'b1)
     );
     // mux2to1 decodeMux(
     //     .a(Bselect),
@@ -774,7 +774,7 @@ module regalu(
         .dbus(dbus),
         .clk(clk),
         .abus(REGatoMUX),
-        .bbus(REGbtoMUX)
+        .bbus(RegbtoIDEX)
     );
     
     branchEQ branchLogic(
