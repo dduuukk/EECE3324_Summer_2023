@@ -896,7 +896,6 @@ module alupipe(
 
     wire [31:0] AtoALU, BtoMUX, SettoD, IMMtoMUX, MUXtoALU, databustoMUX, DADDRtoMUX, databusOUTtoMUX, databusAssign;
     wire [31:0] ALUtoSET;
-    wire [5:0] pipedCBFlags;
 
     wire LWALU, SWALU, LWdb, SWdb, LWout, SWout;
     wire Cw, Vw, Zw, Nw;
@@ -908,7 +907,6 @@ module alupipe(
     //bbus into IDEX out to BtoMUX -> mux
     reg32 B(.d(bbus), .clk(clk), .q(BtoMUX));
 
-    reg32 CBFlagReg(.d(CBFlags), .clk(clk), .q(pipedCBFlags));
     // //LWFlag into IDEX and out to LWALU
     // reg1 LWin(.d(LWFlag), .clk(clk), .q(LWALU)); 
     // //SWFlag into IDEX and out to SWALU
@@ -949,7 +947,7 @@ module alupipe(
     )
 
     condBranchLogic condBranchLogic(
-        .CBFlags(),
+        .CBFlags(CBFlags),
         .C(Cw),
         .V(Vw),
         .Z(Zw),
