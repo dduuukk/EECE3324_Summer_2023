@@ -261,7 +261,7 @@ module controller(
     );
     switch4to1 IMMTypeSelector(
         .a(ALUImmtoMUX),
-        .b(ShamttoMUX),
+        .b(64'd10),
         .c(DTAddrtoMUX),
         .d(IWshiftAMTtoMUX),
         .out(IMMtoIDEX),
@@ -630,7 +630,7 @@ module signextend12to64(
     output [63:0] extend
     );
     
-    assign extend = {{32'd52{in[11]}}, in};  
+    assign extend = {{32'd52{1'b0}}, in};  
 endmodule
 
 module zeroextend6to64(
@@ -638,7 +638,7 @@ module zeroextend6to64(
     output [63:0] extend
     );
     
-    assign extend = {{32'd59{1'b0}}, in};  
+    assign extend = {{32'd58{1'b0}}, in};  
 endmodule
 
 module zeroextend2to64(
@@ -713,7 +713,7 @@ module switch4to1(
     
     always @ (a, b, c, d, out, select1, select2, select3) begin
         case({select1, select2, select3}) 
-            3'b010:
+            3'b001:
             begin
                 out = d;
             end
@@ -1056,6 +1056,24 @@ module FoursignalEnable (
     end
 endmodule
 
+module shiftModule(
+        input [2:0] S,
+        input [63:0] a, shamt, d,
+        output reg [63:0] out
+        );
+        
+        always @(S, a, shamt, d, out) begin
+            case(S)
+                3'b101:
+                    out = a << shamt;
+                3'b111:
+                    out = a >> shamt;
+                default:
+                    out = d;
+            endcase
+        end
+endmodule
+
 //==== 64-BIT ALU =========================================
 module alu64 (d, C, V, N, a, b, Cin, S, Z);
    output [63:0] d;
@@ -1066,10 +1084,10 @@ module alu64 (d, C, V, N, a, b, Cin, S, Z);
    
    wire [63:0] c, g, p;
    wire gout, pout;
-   
+   wire [63:0] ALUd;
    //Alu cells for each bit
    alu_cell alucell[63:0] (
-      .d(d),
+      .d(ALUd),
       .g(g),
       .p(p),
       .a(a),
@@ -1086,6 +1104,14 @@ module alu64 (d, C, V, N, a, b, Cin, S, Z);
       .Cin(Cin),
       .g(g),
       .p(p)
+   );
+
+   shiftModule shiftLogic(
+        .S(S),
+        .a(a),
+        .shamt(b),
+        .d(ALUd),
+        .out(d)
    );
 
    //Flag Calculations
@@ -1116,12 +1142,8 @@ module alu_cell (d, g, p, a, b, c, S);
                 d = p ^ cint;    
             3'b100: //OR
                 d = a|b;
-            3'b101: //Logical Shift Left
-                d = a << b;
             3'b110: //AND
                 d = a & b;
-            3'b111: //Logical Shift Right
-                d = a >> b;
         endcase
     
 endmodule
