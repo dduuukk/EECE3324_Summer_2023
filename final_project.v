@@ -31,7 +31,7 @@ module cpu5arm(
         .a(nextInstJump),
         .b(nextInstStep),
         .out(nextInst),
-        .select(branchTrue)
+        .select(branchTrue|condBranchLogic)
     );
 
     adder plusFour(
@@ -758,8 +758,8 @@ module regalu(
     branchEQ branchLogic(
         .A(REGatoMUX), 
         .B(RegbtoMUX),
-        .BEQInstr(BEQFlag), 
-        .BNEInstr(BNEFlag),
+        .BEQInstr(CBFlags[0]), 
+        .BNEInstr(CBFlags[1]),
         .branchTrue(branchTrue)
     );
 
