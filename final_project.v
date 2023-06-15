@@ -728,17 +728,17 @@ module regalu(
     input [31:0] ImmVal,
     input Imm,
     input clk,
-    output [31:0] abus,
-    output [31:0] bbus,
-    output [31:0] dbus,
+    output [63:0] abus,
+    output [63:0] bbus,
+    output [63:0] dbus,
     input [2:0] S,
     input Cin,
     input LWFlag, SWFlag,
     input [63:0] MOVImm,
     // input BEQFlag, BNEFlag,
     // input SLTFlag, SLEFlag,
-    inout [31:0] databus,
-    output [31:0] daddrbus,
+    inout [63:0] databus,
+    output [63:0] daddrbus,
     output branchTrue,
     output takeCondBranch,
     input ALUOutFlag, BFlag, IMFlag,
@@ -892,7 +892,6 @@ module alupipe(
     output [63:0] daddrbus,
     output takeCondBranch,
     input ALUOutFlag,
-    
     );
 
     wire [31:0] AtoALU, BtoMUX, SettoD, IMMtoMUX, MUXtoALU, databustoMUX, DADDRtoMUX, databusOUTtoMUX, databusAssign;
