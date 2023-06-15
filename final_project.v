@@ -914,7 +914,7 @@ module alupipe(
     );
 
     wire [63:0] AtoALU, BtoMUX, SettoD, IMMtoMUX, MUXtoALU, databustoMUX, DADDRtoMUX, databusOUTtoMUX, databusAssign;
-    wire [63:0] ALUtoSET;
+    wire [63:0] ALUtoD;
 
     wire LWALU, SWALU, LWdb, SWdb, LWout, SWout;
     wire Cw, Vw, Zw, Nw;
@@ -942,7 +942,7 @@ module alupipe(
     
     //
     alu64 alu(
-        .d(ALUtoSET), 
+        .d(ALUtoD), 
         .C(Cw), 
         .V(Vw), 
         .Z(Zw),
@@ -979,7 +979,7 @@ module alupipe(
     // reg1 SLTin(.d(SLTFlag), .clk(clk), .q(SLTout));    
         
     reg64 DADDRin(
-        .d(SettoD), 
+        .d(ALUtoD), 
         .clk(clk), 
         .q(daddrbus)
     );
