@@ -16,15 +16,9 @@ module cpu5arm(
     wire [31:0] nextInstStep, nextInstJump;
     wire branchTrue;
     wire[31:0] instJumpStart;
-    
-    
-    
-    mux2to1 instMux(
-        .a(nextInstJump),
-        .b(nextInstStep),
-        .out(nextInst),
-        .select(branchTrue)
-    );
+    wire ALUOutFlag, ShiftFlag, BFlag, IMFlag;
+    wire [5:0] CBFlags;
+    wire [63:0] MOVImm;
     
     reg32reset PC(
         .d(nextInst),
@@ -32,7 +26,14 @@ module cpu5arm(
         .reset(reset),
         .clk(clk)    
     );
-    
+
+    mux2to1 instMux(
+        .a(nextInstJump),
+        .b(nextInstStep),
+        .out(nextInst),
+        .select(branchTrue)
+    );
+
     adder plusFour(
         .A(iaddrbus),
         .B(32'h00000004),
@@ -63,11 +64,16 @@ module cpu5arm(
         .Imm(IMMtoMUX),
         .LWFlag(LWF),
         .SWFlag(SWF),
-        .BEQFlag(BEQFlag),
-        .BNEFlag(BNEFlag),
-        .SLTFlag(SLT),
-        .SLEFlag(SLE),
-        .multResult(multResult)
+        // .BEQFlag(BEQFlag),
+        // .BNEFlag(BNEFlag),
+        // .SLTFlag(SLT),
+        // .SLEFlag(SLE),
+        .multResult(multResult),
+        .ALUOutFlag(ALUOutFlag),  
+        .BFlag(BFlag), 
+        .IMFlag(IMFlag),
+        .CBFlags(CBFlags),
+        .MOVImm(MOVImm)
     );
     
     regalu Regalu(
@@ -84,13 +90,18 @@ module cpu5arm(
         .Cin(CINtoALU),
         .LWFlag(LWF),
         .SWFlag(SWF),
-        .BEQFlag(BEQFlag),
-        .BNEFlag(BNEFlag),
+        // .BEQFlag(BEQFlag),
+        // .BNEFlag(BNEFlag),
         .branchTrue(branchTrue),
-        .SLTFlag(SLT),
-        .SLEFlag(SLE),
+        // .SLTFlag(SLT),
+        // .SLEFlag(SLE),
         .databus(databus),
-        .daddrbus(daddrbus)
+        .daddrbus(daddrbus),
+        .ALUOutFlag(ALUOutFlag), 
+        .BFlag(BFlag), 
+        .IMFlag(IMFlag),
+        .CBFlags(CBFlags),
+        .MOVImm(MOVImm)
     );
 
 endmodule
@@ -113,6 +124,7 @@ module multiplier (
         out = A * B;
 endmodule
 
+//==== CONTROLLER =========================================
 module controller(
     input [31:0] ibus,
     input clk,
@@ -125,19 +137,24 @@ module controller(
     output Imm,
     output LWFlag, SWFlag,
     //ARM Flags
-    output ALUOutFlag, ShiftFlag, DFlag, BFlag, IMFlag,
-    output [5:0] CBFlags
+    output ALUOutFlag, IMFlag,
+    output [5:0] CBFlags,
+    output [63:0] MOVImm
     );
     
-    wire [31:0] iregtodecoders, rdtomux, MUXtoIDEX, IDEXtoEXMEM,IMMtoIDEX, DSELtoMEMWB, MUXtoDWB;
-    wire [32:0] rmtoMUX, rdtoMUX, ALUImmtoMUX, ShamttoMUX, DTAddrtoMUX;
-    wire decodeImm, decodeCin;
+    //Signals to ID/EX
+    wire [63:0] iregtodecoders, MUXtoIDEX, IDEXtoEXMEM, IMMtoIDEX, DSELtoMEMWB;
+    //Signals to MUXs
+    wire [63:0] rmtoMUX, ALUImmtoMUX, ShamttoMUX, DTAddrtoMUX, rntoMUX;
+    //Flags to ID/EX
+    wire decodeImm, decodeCin, decodeSWFlag, decodeLWFlag, decodeALUOutFlag, decodeShiftFlag, decodeDFlag, decodeBFlag, decodeIMFlag;
+    wire [5:0] decodeCBFlags;
     wire [2:0] decodeS;
     
-    
+    //ibus through IF/ID
     reg32 IFID(.d(ibus), .q(iregtodecoders), .clk(clk));
     
-    
+    //Multiplication for branching
     multiplier multfour(
         .A(IMMtoIDEX),
         .B(32'h00000004),
@@ -147,7 +164,7 @@ module controller(
     //---- DECODER Phase ----------------------------------
     decode5to32 rnDecode(
         .code(iregtodecoders[9:5]),
-        .out(Aselect)    
+        .out(rntoMUX)    
     );
     decode5to32 rmDecode(
         .code(iregtodecoders[20:16]),
@@ -162,9 +179,9 @@ module controller(
         .Imm(decodeImm),
         .S(decodeS),
         .Cin(decodeCin),
-        .LWFlag(LWFlag),
-        .SWFlag(SWFlag),
-        .ALUOutFlag(ALUOutFlag), 
+        .LWFlag(decodeLWFlag),
+        .SWFlag(decodeSWFlag),
+        .ALUOutFlag(decodeALUOutFlag), 
         .ShiftFlag(ShiftFlag), 
         .DFlag(DFlag), 
         .BFlag(BFlag), 
@@ -192,47 +209,82 @@ module controller(
         .in(iregtodecoders[20:12]),
         .extend(DTAddrtoMUX)
     );
+    signextend16to64 SignExtendMOVImm(
+        .in(iregtodecoders[20:5]),
+        .extend(MOVImm)
+    );
     
     //---- MUX Stage --------------------------------------
+    mux2to1 RNorZeroMux(
+        .a(32'h80000000),
+        .b(rntoMUX),
+        .out(Aselect),
+        .select((CBFlags[0] || CBFlags[1]))
+    );
     mux2to1 RMorRDRTMux(
         .a(rdtoMUX),
         .b(rmtoMUX),
         .out(Bselect),
-        .select((CBFlags[0] | CBFlags[1] | SWFlag))
+        .select((CBFlags[0] || CBFlags[1] || SWFlag))
     );
-    mux2to1 decodeMux(
-        .a(Bselect),
-        .b(rdtomux),
-        .out(MUXtoDWB),
-        .select(decodeImm)
-    );
+    // mux2to1 decodeMux(
+    //     .a(Bselect),
+    //     .b(rdtomux),
+    //     .out(MUXtoDWB),
+    //     .select(decodeImm)
+    // );
     mux2to1 SWdisableWrite(
-        .a(32'h11111111),
+        .a(32'h80000000),
         .b(MUXtoDWB),
         .out(MUXtoIDEX),
-        .select(SWFlag || (|CBFlags))
+        .select(decodeSWFlag || (|CBFlags))
     );
     mux4to1 IMMTypeSelector(
         .a(ALUImmtoMUX),
         .b(ShamttoMUX),
         .c(DTAddrtoMUX),
         .d(),
-        .out(immValue),
+        .out(IMMtoIDEX),
         .select1(DFlag), 
         .select2(ShiftFlag)
     );
     
+    //---- D FLIP-FLOP ID/EX STAGE ------------------------
+    //Dselect through ID/EX
     reg32 IDEXD(.d(MUXtoIDEX), .q(IDEXtoEXMEM), .clk(clk));
+    //immValue through ID/EX
     reg32 IDEXDImm(.d(IMMtoIDEX), .q(immValue), .clk(clk));
+    //immFlag throug ID/EX
     reg1 IDEXImm(.d(decodeImm), .q(Imm), .clk(clk));
+    //select through ID/EX
     reg3 IDEXS(.d(decodeS), .q(S), .clk(clk));
+    //Cin through ID/EX
     reg1 IDEXCin(.d(decodeCin), .q(Cin), .clk(clk));
-    
-    reg32 EXMEMD(.d(IDEXtoEXMEM), .q(DSELtoMEMWB), .clk(clk));
-    reg32 MEMWBD(.d(DSELtoMEMWB), .q(Dselect), .clk(clk));
+    //LWFlag through ID/EX
+    reg1 IDEXLW(.d(decodeLWFlag), .q(LWFlag), .clk(clk));
+    //SWFlag through ID/EX
+    reg1 IDEXSW(.d(decodeSWFlag), .q(SWFlag), .clk(clk));
+    //ALUOutFlag through ID/EX
+    reg1 IDEXALUFlagOut(.d(decodeALUOutFlag), .q(ALUOutFlag), .clk(clk));
+    // //ShiftFlag through ID/EX
+    // reg1 IDEXShift(.d(decodeShiftFlag), .q(ShiftFlag), .clk(clk));
+    // //DFlag through ID/EX
+    // reg1 IDEXDFlag(.d(decodeDFlag), .q(DFlag), .clk(clk));
+    // //BFlag through ID/EX
+    // reg1 IDEXBFlag(.d(decodeBFlag), .q(BFlag), .clk(clk));
+    // //IMFlag through ID/EX
+    // reg1 IDEXIMFlag(.d(decodeIMFlag), .q(IMFlag), .clk(clk));
+    // //CBFlags through ID/EX
+    // reg6 IDEXCBFlags(.d(decodeCBFlags), .q(CBFlags), .clk(clk));
 
+    //---- Dselect FLIP-FLOP CHAIN ------------------------
+    //Dselect through EX/MEM
+    reg32 EXMEMD(.d(IDEXtoEXMEM), .q(DSELtoMEMWB), .clk(clk));
+    //Dselect through MEM/WB
+    reg32 MEMWBD(.d(DSELtoMEMWB), .q(Dselect), .clk(clk));
 endmodule
 
+//==== D FLIP-FLOPS =======================================
 module reg32(
     input [31:0] d,
     output reg [31:0] q,
@@ -255,6 +307,34 @@ module reg32reset(
             q = d;
 endmodule
 
+module reg1(
+    input d,
+    output reg q,
+    input clk      
+    );
+    always@(posedge clk)
+        q = d;
+endmodule
+
+module reg3(
+    input [2:0] d,
+    output reg [2:0] q,
+    input clk      
+    );
+    always@(posedge clk)
+        q = d;
+endmodule
+
+module reg6(
+    input [5:0] d,
+    output reg [5:0] q,
+    input clk      
+    );
+    always@(posedge clk)
+        q = d;
+endmodule
+
+//==== DECODERS ===========================================
 module decode5to32(
     input [4:0] code,
     output reg [31:0] out
@@ -420,6 +500,7 @@ module decodeopcode(
             //D-Format
             begin
                 DFlag = 1'b1;
+                Imm = 1'b1;
                 case(code[4:0]) 
                     5'b00000:
                     //LDUR
@@ -443,7 +524,7 @@ module decodeopcode(
                     3'b101:
                     //LDUR
                     begin
-                        S = 3'b010; 
+                        S = 3'b101; 
                         IMFlag = 1'b1;               
                     end 
                 endcase
@@ -508,6 +589,7 @@ module decodeopcode(
     end
 endmodule
 
+//==== EXTENDS ============================================
 module signextend12to64(
     input [11:0] in,
     output [63:0] extend
@@ -532,6 +614,14 @@ module signextend9to64(
     assign extend = {{55{in[8]}}, in};  
 endmodule
 
+module signextend16to64(
+    input [15:0] in,
+    output [63:0] extend
+    );
+    
+    assign extend = {{48{in[15]}}, in};  
+endmodule
+
 module signextend26to32(
     input [25:0] in,
     output [31:0] extend
@@ -548,6 +638,7 @@ module signextend19to32(
     assign extend = {{14{in[18]}}, in};  
 endmodule
 
+//==== MUX MODULES ========================================
 module mux2to32(
     input [31:0] a,
     input [31:0] b,
@@ -595,24 +686,6 @@ module mux4to1(
     end
 endmodule
 
-
-module reg1(
-    input d,
-    output reg q,
-    input clk      
-    );
-    always@(posedge clk)
-        q = d;
-endmodule
-
-module reg3(
-    input [2:0] d,
-    output reg [2:0] q,
-    input clk      
-    );
-    always@(posedge clk)
-        q = d;
-endmodule
 module branchEQ (
     input [31:0] A, 
     input [31:0] B,
@@ -637,37 +710,51 @@ module regalu(
     input [2:0] S,
     input Cin,
     input LWFlag, SWFlag,
-    input BEQFlag, BNEFlag,
-    input SLTFlag, SLEFlag,
+    input [63:0] MOVImm,
+    // input BEQFlag, BNEFlag,
+    // input SLTFlag, SLEFlag,
     inout [31:0] databus,
     output [31:0] daddrbus,
-    output branchTrue
+    output branchTrue,
+    input ALUOutFlag, BFlag, IMFlag, CBFlags
     );
-    wire [31:0] REGtoALUa, REGtoALUb;
+    wire [31:0] REGatoMUX, REGbtoMUX, REGatoIDEX, RegbtoIDEX;
     regfile32x32 regfile(
         .dselect(Dselect),
         .aselect(Aselect),
         .bselect(Bselect),
         .dbus(dbus),
         .clk(clk),
-        .abus(REGtoALUa),
-        .bbus(REGtoALUb)
+        .abus(REGatoMUX),
+        .bbus(REGbtoMUX)
     );
     
     branchEQ branchLogic(
-        .A(REGtoALUa), 
-        .B(REGtoALUb),
+        .A(REGatoMUX), 
+        .B(RegbtoMUX),
         .BEQInstr(BEQFlag), 
         .BNEInstr(BNEFlag),
         .branchTrue(branchTrue)
     );
+
+    mux2to1 AoutorMOVImm(
+        .a(MOVImm),
+        .b(REGatoMUX),
+        .out(REGatoIDEX),
+        .select(IMFlag)
+    );
+    mux2to1 AoutorMOVImm( //talk about where we want to do this!
+        .a(//instruction[22:21]*16?),
+        .b(REGbtoMUX),
+        .out(REGbtoIDEX),
+        .select(IMMFlag)
+    );
     
     
-    
-alupipe alu(
+    alupipe alu(
         .S(S),
-        .abus(REGtoALUa),
-        .bbus(REGtoALUb),
+        .abus(REGatoIDEX),
+        .bbus(RegbtoIDEX),
         .ImmVal(ImmVal),
         .Imm(Imm),
         .clk(clk),
@@ -681,6 +768,7 @@ alupipe alu(
         .SLEFlag(SLEFlag),
         .databus(databus),
         .daddrbus(daddrbus)
+        .ALUOutFlag(ALUOutFlag)  
         );
 endmodule
 
@@ -693,8 +781,6 @@ module regfile32x32(
     output [31:0] abus,
     output [31:0] bbus
     );
-    
-    
     
     reg32negative registers[30:0](
     .d(dbus),
@@ -744,44 +830,29 @@ module alupipe(
     output [63:0] bbusout,
     inout [63:0] databus,
     output [63:0] daddrbus,
-    output C, N, Z, V
+    output C, N, Z, V,
+    input ALUOutFlag,
+    
     );
-       
+
     wire [31:0] AtoALU, BtoMUX, SettoD, IMMtoMUX, MUXtoALU, databustoMUX, DADDRtoMUX, databusOUTtoMUX, databusAssign;
     wire [31:0] ALUtoSET;
 
     wire LWALU, SWALU, LWdb, SWdb, LWout, SWout;
+    wire Cw, Vw, Zw, Nw;
+    // wire SLEout, SLTout;
     
-    //---- IDEX -----------------------
+    //---- IDEX FOR REG FILE OUTPUTS-----------------------
     //abus into IDEX out to abusout -> alu
-    reg32 A(
-        .d(abus), 
-        .clk(clk), 
-        .q(abusout)
-    );
-
+    reg32 A(.d(abus), .clk(clk), .q(abusout));
     //bbus into IDEX out to BtoMUX -> mux
-    reg32 B(
-        .d(bbus), 
-        .clk(clk), 
-        .q(BtoMUX)
-    );
+    reg32 B(.d(bbus), .clk(clk), .q(BtoMUX));
+    // //LWFlag into IDEX and out to LWALU
+    // reg1 LWin(.d(LWFlag), .clk(clk), .q(LWALU)); 
+    // //SWFlag into IDEX and out to SWALU
+    // reg1 SWin(.d(SWFlag), .clk(clk), .q(SWALU));
 
-    //LWFlag into IDEX and out to LWALU
-    reg1 LWin(
-        .d(LWFlag), 
-        .clk(clk), 
-        .q(LWALU)
-    ); 
-
-    //SWFlag into IDEX and out to SWALU
-    reg1 SWin(
-        .d(SWFlag), 
-        .clk(clk), 
-        .q(SWALU)
-    );
-
-    //---- Execute Stage Interior -----
+    //---- Execute Stage Interior -------------------------
     //Immediate value and B into MUX, selected by imm (IMMFlag), out to bbusout -> alu
     mux2to1 IMMorBselect(
         .a(ImmVal),
@@ -793,26 +864,30 @@ module alupipe(
     //
     alu64 alu(
         .d(ALUtoSET), 
-        .C(C), 
-        .V(V), 
-        .Z(Z),
-        .N(N),
+        .C(Cw), 
+        .V(Vw), 
+        .Z(Zw),
+        .N(Nw),
         .a(abusout),
         .b(bbusout),
         .Cin(Cin), 
         .S(S)
      );
-     wire SLEout, SLTout;
-    reg1 SLEin(
-        .d(SLEFlag), 
-        .clk(clk), 
-        .q(SLEout)
-    ); 
-    reg1 SLTin(
-        .d(SLTFlag), 
-        .clk(clk), 
-        .q(SLTout)
-    );    
+
+    FoursignalEnable ALUFlagsEnable(
+        .a(Cw),
+        .b(Vw),
+        .c(Zw),
+        .d(Nw),
+        .enable(ALUOutFlag),
+        .aout(C),
+        .bout(V),
+        .cout(Z),
+        .dout(W)
+    )
+    
+    // reg1 SLEin(.d(SLEFlag), .clk(clk), .q(SLEout)); 
+    // reg1 SLTin(.d(SLTFlag), .clk(clk), .q(SLTout));    
         
     reg32 DADDRin(
         .d(SettoD), 
@@ -825,12 +900,12 @@ module alupipe(
         .q(databustoMUX)
     );
     reg1 SWoutALU(
-        .d(SWALU), 
+        .d(SWFlag), 
         .clk(clk), 
         .q(SWdb)
     );
     reg1 LWoutALU(
-        .d(LWALU), 
+        .d(LWFlag), 
         .clk(clk), 
         .q(LWdb)
     );
@@ -861,6 +936,32 @@ module alupipe(
     );
 endmodule
 
+module FoursignalEnable (
+    input a, b, c, d,
+    input enable,
+    output reg aout, bout, cout, dout
+    );
+
+    always @ (a, b, c, d, enable, aout, bout, cout, dout)
+    begin
+        case(enable)
+            1'b0:
+            begin
+                aout = 1'b0;
+                bout = 1'b0;
+                cout = 1'b0;
+                dout = 1'b0;
+            end
+            1'b1:
+            begin
+                aout = a;
+                bout = b;
+                cout = c;
+                dout = d;
+            end
+        endcase
+    end
+endmodule
 
 //==== 64-BIT ALU =========================================
 module alu64 (d, Cout, V, a, b, Cin, S, Z);
