@@ -466,6 +466,7 @@ module decodeopcode(
                     //SUBS
                     begin
                         S = 3'b011;
+                        Cin = 1'b1;
                         ALUOutFlag = 1'b1;                
                     end 
                 endcase            
@@ -1002,7 +1003,7 @@ module alupipe(
         .q(LWdb)
     );
     
-    assign databus = SWdb ? databustoMUX : 32'bz;
+    assign databus = SWdb ? databustoMUX : 64'bz;
     
     reg64 DADDROUT(
         .d(daddrbus), 
