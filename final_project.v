@@ -419,23 +419,23 @@ module decodeopcode(
                     5'b00010:
                     //AND
                     begin
-                        S = 3'b010;                
+                        S = 3'b110;                
                     end   
                     5'b00011:
                     //ANDS
                     begin
-                        S = 3'b010; 
+                        S = 3'b110; 
                         ALUOutFlag = 1'b1;               
                     end 
                     5'b00100:
                     //EOR
                     begin
-                        S = 3'b010;                
+                        S = 3'b000;                
                     end 
                     5'b00101:
                     //ENOR
                     begin
-                        S = 3'b010;                
+                        S = 3'b001;                
                     end 
                     5'b00110:
                     //LSL
@@ -454,17 +454,18 @@ module decodeopcode(
                     5'b01000:
                     //ORR
                     begin
-                        S = 3'b010;                
+                        S = 3'b100;                
                     end 
                     5'b01001:
                     //SUB
                     begin
-                        S = 3'b010;                
+                        S = 3'b011;
+                        Cin = 1'b1;           
                     end 
                     5'b01010:
                     //SUBS
                     begin
-                        S = 3'b010;
+                        S = 3'b011;
                         ALUOutFlag = 1'b1;                
                     end 
                 endcase            
@@ -489,38 +490,40 @@ module decodeopcode(
                     4'b0010:
                     //ANDI
                     begin
-                        S = 3'b010;                
+                        S = 3'b110;                
                     end   
                     4'b0011:
                     //ANDIS
                     begin
-                        S = 3'b010;
+                        S = 3'b110;
                         ALUOutFlag = 1'b1;                 
                     end 
                     4'b0100:
                     //EORI
                     begin
-                        S = 3'b010;                
+                        S = 3'b000;                
                     end 
                     4'b0101:
                     //ENORI
                     begin
-                        S = 3'b010;                
+                        S = 3'b001;                
                     end 
                     4'b0110:
                     //ORRI
                     begin
-                        S = 3'b010;                
+                        S = 3'b100;                
                     end 
                     4'b0111:
                     //SUBI
                     begin
-                        S = 3'b010;                
+                        S = 3'b011;   
+                        Cin = 1'b1;              
                     end 
                     4'b1000:
                     //SUBIS
                     begin
-                        S = 3'b010;
+                        S = 3'b011;
+                        Cin = 1'b1; 
                         ALUOutFlag = 1'b1;                 
                     end
                 endcase
@@ -829,21 +832,21 @@ module regfile32x32(
     output [63:0] bbus
     );
     
-    reg32negative registers[30:0](
+    reg64negative registers[30:0](
     .d(dbus),
     .abus(abus),
     .bbus(bbus),
     .clk(clk),
-    .dselect(dselect[31:1]),
-    .aselect(aselect[31:1]),
-    .bselect(bselect[31:1])
+    .dselect(dselect[30:0]),
+    .aselect(aselect[30:0]),
+    .bselect(bselect[30:0])
     );
     
-    assign abus = aselect[31]==1'b1 ? 32'b0 : 32'bz;
-    assign bbus = bselect[31]==1'b1 ? 32'b0 : 32'bz;
+    assign abus = aselect[31]==1'b1 ? 64'b0 : 64'bz;
+    assign bbus = bselect[31]==1'b1 ? 64'b0 : 64'bz;
 endmodule
 
-module reg32negative(
+module reg64negative(
     input [63:0] d,
     output [63:0] abus,
     output [63:0] bbus,
@@ -852,13 +855,13 @@ module reg32negative(
     input clk,
     input dselect   
     );
-    reg [31:0] q;
+    reg [63:0] q;
     wire newclk;
     always@(negedge clk)
         if (dselect==1'b1) q = d;
     
-    assign abus = aselect ? q : 32'bz;
-    assign bbus = bselect ? q : 32'bz;
+    assign abus = aselect ? q : 64'bz;
+    assign bbus = bselect ? q : 64'bz;
 endmodule
 
 module condBranchLogic(
