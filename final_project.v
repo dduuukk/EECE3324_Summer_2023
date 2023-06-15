@@ -95,6 +95,7 @@ module cpu5arm(
         // .BEQFlag(BEQFlag),
         // .BNEFlag(BNEFlag),
         .branchTrue(branchTrue),
+        .takeCondBranch(takeCondBranch),
         // .SLTFlag(SLT),
         // .SLEFlag(SLE),
         .databus(databus),
@@ -739,7 +740,9 @@ module regalu(
     inout [31:0] databus,
     output [31:0] daddrbus,
     output branchTrue,
-    input ALUOutFlag, BFlag, IMFlag, CBFlags
+    output takeCondBranch,
+    input ALUOutFlag, BFlag, IMFlag,
+    input [5:0] CBFlags
     );
     wire [63:0] REGatoMUX, REGbtoMUX, REGatoIDEX, RegbtoIDEX;
     regfile32x32 regfile(
@@ -789,8 +792,10 @@ module regalu(
         .SWFlag(SWFlag),
         .SLTFlag(SLTFlag),
         .SLEFlag(SLEFlag),
+        .CBFlags(CBFlags),
         .databus(databus),
-        .daddrbus(daddrbus)
+        .daddrbus(daddrbus),
+        .takeCondBranch(takeCondBranch),
         .ALUOutFlag(ALUOutFlag)  
         );
 endmodule
@@ -837,6 +842,37 @@ module reg32negative(
     assign bbus = bselect ? q : 32'bz;
 endmodule
 
+module condBranchLogic(
+    input [5:0] flags,
+    input C, V, Z, N, 
+    output reg branch
+    );
+    always @(flags, C, V, Z, N) begin
+        case(flags)
+            5'b0010:
+            //EQ
+                begin
+                    branch = Z;
+                end
+            5'b00100:
+            //NEQ
+                begin
+                    branch = (~Z);
+                end
+            5'b1000:
+            //LT
+                begin
+                    branch = (N != V);
+                end
+            5'b10000:
+            //GE
+                begin
+                    branch = (N == V);
+                end
+        endcase
+    end
+
+endmodule
 
 module alupipe(
     input [2:0] S,
@@ -848,18 +884,20 @@ module alupipe(
     input Cin,
     input LWFlag, SWFlag,
     input SLEFlag, SLTFlag,
+    input [5:0] CBFlags,
     output [63:0] dbus,
     output [63:0] abusout,
     output [63:0] bbusout,
     inout [63:0] databus,
     output [63:0] daddrbus,
-    output C, N, Z, V,
+    output takeCondBranch,
     input ALUOutFlag,
     
     );
 
     wire [31:0] AtoALU, BtoMUX, SettoD, IMMtoMUX, MUXtoALU, databustoMUX, DADDRtoMUX, databusOUTtoMUX, databusAssign;
     wire [31:0] ALUtoSET;
+    wire [5:0] pipedCBFlags;
 
     wire LWALU, SWALU, LWdb, SWdb, LWout, SWout;
     wire Cw, Vw, Zw, Nw;
@@ -870,6 +908,8 @@ module alupipe(
     reg32 A(.d(abus), .clk(clk), .q(abusout));
     //bbus into IDEX out to BtoMUX -> mux
     reg32 B(.d(bbus), .clk(clk), .q(BtoMUX));
+
+    reg32 CBFlagReg(.d(CBFlags), .clk(clk), .q(pipedCBFlags));
     // //LWFlag into IDEX and out to LWALU
     // reg1 LWin(.d(LWFlag), .clk(clk), .q(LWALU)); 
     // //SWFlag into IDEX and out to SWALU
@@ -908,6 +948,16 @@ module alupipe(
         .cout(Z),
         .dout(W)
     )
+
+    condBranchLogic condBranchLogic(
+        .CBFlags(),
+        .C(Cw),
+        .V(Vw),
+        .Z(Zw),
+        .N(Nw),
+        .branch(takeCondBranch)
+
+    ) 
     
     // reg1 SLEin(.d(SLEFlag), .clk(clk), .q(SLEout)); 
     // reg1 SLTin(.d(SLTFlag), .clk(clk), .q(SLTout));    

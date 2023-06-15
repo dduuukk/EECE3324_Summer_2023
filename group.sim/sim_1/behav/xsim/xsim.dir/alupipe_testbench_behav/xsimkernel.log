@@ -1,7 +1,7 @@
-Running: xsim.dir/alupipe_testbench_behav/xsimk.exe -simmode gui -wdb alupipe_testbench_behav.wdb -simrunnum 0 -socket 52370
+Running: xsim.dir/alupipe_testbench_behav/xsimk.exe -simmode gui -wdb alupipe_testbench_behav.wdb -simrunnum 0 -socket 63915
 Design successfully loaded
-Design Loading Memory Usage: 7580 KB (Peak: 7580 KB)
-Design Loading CPU Usage: 31 ms
+Design Loading Memory Usage: 7544 KB (Peak: 7544 KB)
+Design Loading CPU Usage: 15 ms
 Simulation completed
-Simulation Memory Usage: 8344 KB (Peak: 8344 KB)
+Simulation Memory Usage: 8336 KB (Peak: 8336 KB)
 Simulation CPU Usage: 77 ms

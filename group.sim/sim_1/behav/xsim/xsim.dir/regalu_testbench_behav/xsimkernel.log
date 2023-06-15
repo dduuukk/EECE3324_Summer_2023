@@ -1,4 +1,7 @@
-Running: xsim.dir/regalu_testbench_behav/xsimk.exe -simmode gui -wdb regalu_testbench_behav.wdb -simrunnum 0 -socket 52928
+Running: xsim.dir/regalu_testbench_behav/xsimk.exe -simmode gui -wdb regalu_testbench_behav.wdb -simrunnum 0 -socket 64042
 Design successfully loaded
-Design Loading Memory Usage: 7640 KB (Peak: 7640 KB)
+Design Loading Memory Usage: 7656 KB (Peak: 7656 KB)
 Design Loading CPU Usage: 61 ms
+Simulation completed
+Simulation Memory Usage: 8640 KB (Peak: 8640 KB)
+Simulation CPU Usage: 77 ms
