@@ -73,7 +73,9 @@ module cpu5arm(
         .BFlag(BFlag), 
         .IMFlag(IMFlag),
         .CBFlags(CBFlags),
-        .MOVImm(MOVImm)
+        .MOVImm(MOVImm),
+        .BRAddr(),
+        .CondBRAddr()
     );
     
     regalu Regalu(
@@ -131,7 +133,7 @@ module controller(
     output [31:0] Aselect,
     output [31:0] Bselect,
     output [31:0] Dselect,
-    output [31:0] immValue, multResult,
+    output [31:0] immValue, multResult, BRAddr, CondBRAddr,
     output Cin,
     output [2:0] S,
     output Imm,
@@ -145,7 +147,8 @@ module controller(
     //Signals to ID/EX
     wire [63:0] iregtodecoders, MUXtoIDEX, IDEXtoEXMEM, IMMtoIDEX, DSELtoMEMWB;
     //Signals to MUXs
-    wire [63:0] rmtoMUX, ALUImmtoMUX, ShamttoMUX, DTAddrtoMUX, rntoMUX;
+    wire [63:0] ALUImmtoMUX, ShamttoMUX, DTAddrtoMUX, IWshiftAMT, IWshiftAMTtoMUX;
+    wire [31:0] rntoMUX, rmtoMUX, rdtoMUX;
     //Flags to ID/EX
     wire decodeImm, decodeCin, decodeSWFlag, decodeLWFlag, decodeALUOutFlag, decodeShiftFlag, decodeDFlag, decodeBFlag, decodeIMFlag;
     wire [5:0] decodeCBFlags;
@@ -187,7 +190,10 @@ module controller(
         .BFlag(BFlag), 
         .IMFlag(IMFlag),
         .CBFlags(CBFlags)
-        
+    );
+    zeroextend2to64 rdrtDecode(
+        .in(iregtodecoders[22:21]),
+        .extend(IWshiftAMT)
     );
     signextend12to64 SignExtendALUImm(
         .in(iregtodecoders[21:10]),
@@ -213,6 +219,9 @@ module controller(
         .in(iregtodecoders[20:5]),
         .extend(MOVImm)
     );
+
+    //Multiply Shift AMT by 16
+    assign IWshiftAMTtoMUX = IWshiftAMT << 4;
     
     //---- MUX Stage --------------------------------------
     mux2to1 RNorZeroMux(
@@ -239,14 +248,15 @@ module controller(
         .out(MUXtoIDEX),
         .select(decodeSWFlag || (|CBFlags))
     );
-    mux4to1 IMMTypeSelector(
+    switch4to1 IMMTypeSelector(
         .a(ALUImmtoMUX),
         .b(ShamttoMUX),
         .c(DTAddrtoMUX),
-        .d(),
+        .d(IWshiftAMTtoMUX),
         .out(IMMtoIDEX),
         .select1(DFlag), 
-        .select2(ShiftFlag)
+        .select2(ShiftFlag),
+        .select3(IMFlag)
     );
     
     //---- D FLIP-FLOP ID/EX STAGE ------------------------
@@ -525,7 +535,8 @@ module decodeopcode(
                     //LDUR
                     begin
                         S = 3'b101; 
-                        IMFlag = 1'b1;               
+                        IMFlag = 1'b1;  
+                        Imm = 1'b1;             
                     end 
                 endcase
             end
@@ -606,6 +617,14 @@ module zeroextend6to64(
     assign extend = {{51{0}}, in};  
 endmodule
 
+module zeroextend2to64(
+    input [1:0] in,
+    output reg [63:0] extend
+    );
+
+    assign extend = {{62{0}}, in}; 
+endmodule
+
 module signextend9to64(
     input [8:0] in,
     output [63:0] extend
@@ -659,22 +678,26 @@ module mux2to64(
     assign out = select ? a : b;
 endmodule
 
-module mux4to1(
+module switch4to1(
     input [63:0] a,
     input [63:0] b,
     input [63:0] c,
     input [63:0] d,
     output reg [63:0] out,
-    input select1, select2
+    input select1, select2, select3
     );
     
-    always @ (a, b, c, d, out, select) begin
-        case({select1, select2}) 
-            2'b01:
+    always @ (a, b, c, d, out, select1, select2, select3) begin
+        case({select1, select2, select3}) 
+            2'b010:
+            begin
+                out = d;
+            end
+            2'b010:
             begin
                 out = b;
             end
-            2'b10:
+            2'b100:
             begin
                 out = c;
             end
@@ -718,7 +741,7 @@ module regalu(
     output branchTrue,
     input ALUOutFlag, BFlag, IMFlag, CBFlags
     );
-    wire [31:0] REGatoMUX, REGbtoMUX, REGatoIDEX, RegbtoIDEX;
+    wire [63:0] REGatoMUX, REGbtoMUX, REGatoIDEX, RegbtoIDEX;
     regfile32x32 regfile(
         .dselect(Dselect),
         .aselect(Aselect),
