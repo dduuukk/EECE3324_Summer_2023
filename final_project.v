@@ -198,7 +198,7 @@ module controller(
         .in(iregtodecoders[22:21]),
         .extend(IWshiftAMT)
     );
-    signextend12to64 SignExtendALUImm(
+    zeroextend12to64 SignExtendALUImm(
         .in(iregtodecoders[21:10]),
         .extend(ALUImmtoMUX)
     );
@@ -226,7 +226,7 @@ module controller(
         .in(iregtodecoders[20:12]),
         .extend(DTAddrtoMUX)
     );
-    signextend16to64 SignExtendMOVImm(
+    zeroextend16to64 SignExtendMOVImm(
         .in(iregtodecoders[20:5]),
         .extend(MOVImm)
     );
@@ -625,7 +625,7 @@ module decodeopcode(
 endmodule
 
 //==== EXTENDS ============================================
-module signextend12to64(
+module zeroextend12to64(
     input [11:0] in,
     output [63:0] extend
     );
@@ -657,12 +657,12 @@ module signextend9to64(
     assign extend = {{32'd55{in[8]}}, in};  
 endmodule
 
-module signextend16to64(
+module zeroextend16to64(
     input [15:0] in,
     output [63:0] extend
     );
     
-    assign extend = {{32'd48{in[15]}}, in};  
+    assign extend = {{32'd48{1'b0}}, in};  
 endmodule
 
 module signextend26to64(
