@@ -869,7 +869,7 @@ module condBranchLogic(
     input clk, 
     output reg branch
     );
-    always @(CBFlags, C, V, Z, N, branch) begin
+    always @(CBFlags, C, V, Z, N, branch, posedge clk) begin
         case(CBFlags)
             6'b000100:
             //EQ
@@ -889,7 +889,7 @@ module condBranchLogic(
             6'b100000:
             //GE
                 begin
-                    branch = (N === V) === 1'b1 ? 1'b1 : 1'b0;
+                    branch = (N===V) ? 1'b1 : 1'b0;
                 end
                 
             default:
@@ -970,7 +970,7 @@ module alupipe(
         .aout(C),
         .bout(V),
         .cout(Z),
-        .dout(N)
+        .dout(W)
     );
 
     condBranchLogic condBranchLogicmodule(
@@ -1130,7 +1130,7 @@ module alu64 (d, C, V, N, a, b, Cin, S, Z);
    assign C = gout | (pout & Cin); //Carry-out flag
    assign V = C ^ c[63]; //Overflow flag
    assign Z = !(|d); // Zero flag
-   assign N = d[63] ; //Negative flag
+   assign N = (d < 64'h0000000000000000) ? 1'b1 : 1'b0; //Negative flag
 endmodule
 
 //==== ALU CELL =======================
