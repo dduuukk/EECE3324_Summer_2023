@@ -867,31 +867,45 @@ module condBranchLogic(
     input [5:0] CBFlags,
     input C, V, Z, N,
     input clk, 
+    input enable,
     output reg branch
     );
-    always @(CBFlags, C, V, Z, N, branch) begin
-        case(CBFlags)
-            6'b000100:
-            //EQ
-                begin
-                    branch = Z ? 1'b1 : 1'b0;
-                end
-            6'b001000:
-            //NEQ
-                begin
-                    branch = ~Z ? 1'b1 : 1'b0;
-                end
-            6'b010000:
-            //LT
-                begin
-                    branch = (N !== V) ? 1'b1: 1'b0;
-                end
-            6'b100000:
-            //GE
-                begin
-                    branch = (N === V) === 1'b1 ? 1'b1 : 1'b0;
-                end
-                
+    always @(CBFlags, C, V, Z, N, branch, enable) begin
+        case(enable)
+            1'b1:
+            begin
+                case(CBFlags)
+                    6'b000100:
+                    //EQ
+                        begin
+                            branch = Z ? 1'b1 : 1'b0;
+                        end
+                    6'b001000:
+                    //NEQ
+                        begin
+                            branch = ~Z ? 1'b1 : 1'b0;
+                        end
+                    6'b010000:
+                    //LT
+                        begin
+                            branch = (N !== V) ? 1'b1: 1'b0;
+                        end
+                    6'b100000:
+                    //GE
+                        begin
+                            branch = (N === V) === 1'b1 ? 1'b1 : 1'b0;
+                        end
+                        
+                    default:
+                    begin
+                        branch = 1'b0;
+                    end
+                endcase
+            end
+            1'b0:
+            begin
+                branch = 1'b0;
+            end
             default:
             begin
                 branch = 1'b0;
@@ -951,27 +965,27 @@ module alupipe(
     //
     alu64 alu(
         .d(ALUtoD), 
-        .C(Cw), 
-        .V(Vw), 
-        .Z(Zw),
-        .N(Nw),
+        .C(C), 
+        .V(V), 
+        .Z(Z),
+        .N(N),
         .a(abusout),
         .b(bbusout),
         .Cin(Cin), 
         .S(S)
      );
 
-    FoursignalEnable ALUFlagsEnable(
-        .a(Cw),
-        .b(Vw),
-        .c(Zw),
-        .d(Nw),
-        .enable(ALUOutFlag),
-        .aout(C),
-        .bout(V),
-        .cout(Z),
-        .dout(N)
-    );
+    // FoursignalEnable ALUFlagsEnable(
+    //     .a(Cw),
+    //     .b(Vw),
+    //     .c(Zw),
+    //     .d(Nw),
+    //     .enable(ALUOutFlag),
+    //     .aout(C),
+    //     .bout(V),
+    //     .cout(Z),
+    //     .dout(N)
+    // );
 
     condBranchLogic condBranchLogicmodule(
         .CBFlags(CBFlags),
@@ -979,7 +993,8 @@ module alupipe(
         .V(V),
         .Z(Z),
         .N(N),
-        .branch(takeCondBranch)
+        .branch(takeCondBranch),
+        .enable(ALUOutFlag)
     );
     
     // reg1 SLEin(.d(SLEFlag), .clk(clk), .q(SLEout)); 
